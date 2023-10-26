@@ -1,7 +1,6 @@
 import base64
 import re
 import time
-from tests.smoke.utils import MINIO_API_PORT, MINIO_WAIT_TIMEOUT_S, PREFECT_IMAGE_NAME
 
 import pytest
 import pytest_asyncio
@@ -11,6 +10,8 @@ from minio import Minio
 from minio.error import InvalidResponseError
 from prefect.filesystems import RemoteFileSystem
 from prefect.infrastructure.kubernetes import KubernetesJob
+
+from tests.smoke.utils import MINIO_API_PORT, MINIO_WAIT_TIMEOUT_S, PREFECT_IMAGE_NAME
 
 
 def pytest_addoption(parser):

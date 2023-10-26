@@ -1,12 +1,13 @@
 import io
 import time
-from tests.smoke.utils import FLOW_RUN_TIMEOUT_S, prefect_test_flow
 
 import pytest
 from prefect.client import get_client
 from prefect.deployments import Deployment
 from prefect.filesystems import RemoteFileSystem
 from prefect.infrastructure.kubernetes import KubernetesJob
+
+from tests.smoke.utils import FLOW_RUN_TIMEOUT_S, prefect_test_flow
 
 
 class PrefectError(Exception):

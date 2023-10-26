@@ -17,12 +17,12 @@ export PYTHONPATH=$PWD
 import asyncio
 import time
 from io import StringIO
-from tests.integration.flows.flow2 import flow2
 from unittest.mock import patch
 
 import pytest
 
 import x1
+from tests.integration.flows.flow2 import flow2
 
 
 @pytest.mark.asyncio
