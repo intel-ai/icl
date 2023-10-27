@@ -1,0 +1,5 @@
+- name: Node setup
+  hosts: all
+
+  roles:
+    - role: ../common/roles/jumphost

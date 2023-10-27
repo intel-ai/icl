@@ -1,4 +1,4 @@
-name: Single node X1 with Kind
+name: Single node X1 with Kind on Rocky Linux Vagrant VM
 
 # Controls when the workflow will run
 on:
@@ -13,18 +13,22 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on:
+      - self-hosted
+      - libvirt-vagrant
     steps:
       - name: Checkout x1 repository
         uses: actions/checkout@v4
 
-      - name: Deploy X1 with kind
-        run: |
-          ./scripts/deploy/kind.sh
+      - name: Checkout x1-cluster-profiles repository
+        uses: actions/checkout@v3
+        with:
+          repository: intel-sandbox/x1-cluster-profiles
+          path: x1-cluster-profiles
+          token: ${{ secrets.X1_GITHUB_TOKEN }}
 
-      - name: Run tests
-        run: |
-          ./scripts/deploy/kind.sh --console ./scripts/ccn/test.sh
+      - name: Deploy X1 to Vagrant VMs
+        run: echo ./scripts/ci/vagrant-rl-kind.sh
 
       - name: Upload logs
         if: always()
