@@ -33,4 +33,4 @@ echo "Starting up Vagrant VMs ..."
 cd "$WORKSPACE_DIR/vagrant-rl-kind"
 vagrant up
 vagrant ssh jumphost -c "./x1/scripts/deploy/kind.sh"
-vagrant ssh jumphost -c "./test.sh"
+vagrant ssh jumphost -c "./x1/scripts/deploy/kind.sh --console ./scripts/ccn/test.sh"

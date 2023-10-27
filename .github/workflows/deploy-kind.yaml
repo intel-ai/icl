@@ -1,4 +1,4 @@
-name: Single node X1 - kind
+name: Single node x1 with kind
 
 # Controls when the workflow will run
 on:
