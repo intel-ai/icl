@@ -309,7 +309,7 @@ if [[ " $@ " =~ " --with-cert-manager " ]]; then
 fi
 
 with_corefile
-control_node "terraform -chdir=x1/terraform/x1 init -upgrade -input=false"
-control_node "terraform -chdir=x1/terraform/x1 apply -input=false -auto-approve ${terraform_extra_args[*]}"
+control_node "terraform -chdir=terraform/x1 init -upgrade -input=false"
+control_node "terraform -chdir=terraform/x1 apply -input=false -auto-approve ${terraform_extra_args[*]}"
 
 echo "To delete the cluster run '$0 --delete'"
