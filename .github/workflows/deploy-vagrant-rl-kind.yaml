@@ -1,4 +1,4 @@
-name: Single node X1 with Kind on Rocky Linux Vagrant VM
+name: Single node X1 - vagrant, rl, kind
 
 # Controls when the workflow will run
 on:
@@ -28,7 +28,7 @@ jobs:
           token: ${{ secrets.X1_GITHUB_TOKEN }}
 
       - name: Deploy X1 to Vagrant VMs
-        run: echo ./scripts/ci/vagrant-rl-kind.sh
+        run: ./scripts/ci/vagrant-rl-kind.sh
 
       - name: Upload logs
         if: always()
