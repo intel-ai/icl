@@ -39,14 +39,14 @@ function dump_logs() {(
   cd "$PROJECT_DIR"
   # Each individual test can fail, this should not stop the whole process
   set +ex
-  test/kubernetes/pods.sh
-  test/kubernetes/coredns.sh
-  test/kubernetes/prefect.sh
-  test/kubernetes/jupyterhub.sh
+  tests/kubernetes/pods.sh
+  tests/kubernetes/coredns.sh
+  tests/kubernetes/prefect.sh
+  tests/kubernetes/jupyterhub.sh
 )}
 
 function smoke_check() {
-  cd "$PROJECT_DIR/test/smoke"
+  cd "$PROJECT_DIR/tests/smoke"
   echo "PREFECT_API_URL=$PREFECT_API_URL"
   echo "S3_ENDPOINT=$S3_ENDPOINT"
   echo "RAY_ENDPOINT=$RAY_ENDPOINT"
@@ -56,7 +56,7 @@ function smoke_check() {
 }
 
 function integration_tests() {
-  cd "$PROJECT_DIR/test/integration"
+  cd "$PROJECT_DIR/tests/integration"
   pytest -n 4 -v . --address $INGRESS_DOMAIN
 }
 
