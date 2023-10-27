@@ -230,8 +230,14 @@ EOF
 fi
 
 if [[ " $@ " =~ " --console " ]]; then
-  control_node
-  exit 0
+  shift
+  _rest_args="$@"
+  cmd="bash"
+  if [[ -n "$_rest_args" ]]; then
+    cmd="$_rest_args"
+  fi
+  control_node "$cmd"
+  exit $?
 fi
 
 if [[ " $@ " =~ " --check " ]]; then
