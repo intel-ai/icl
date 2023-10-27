@@ -1,8 +1,7 @@
 #!/bin/bash
 
 # This script executes smoke tests and must be executed on the control node.
-# It loads .x1/environment file in the current directory, if exists, to set up required environment variables:
-#   INGRESS_DOMAIN
+# It loads .x1/environment file in the current directory, if exists, to set up environment variables.
 
 # Usage: test.sh [option]
 #   (no option)       installs dependencies and executes all tests
@@ -11,7 +10,7 @@
 
 set -e
 
-: ${INGRESS_DOMAIN:=localtest.me}
+: ${X1_INGRESS_DOMAIN:=localtest.me}
 
 if [[ -f .x1/environment ]]; then
   source .x1/environment
@@ -22,9 +21,9 @@ PROJECT_DIR="$( cd -- "$SCRIPT_DIR/../../" &> /dev/null && pwd )"
 
 cd "$PROJECT_DIR"
 
-: ${PREFECT_API_URL:="http://prefect.${INGRESS_DOMAIN}/api"}
-: ${S3_ENDPOINT:="s3.${INGRESS_DOMAIN}"}
-: ${RAY_ENDPOINT:="ray.${INGRESS_DOMAIN}:443"}
+: ${PREFECT_API_URL:="http://prefect.${X1_INGRESS_DOMAIN}/api"}
+: ${X1_S3_ENDPOINT:="s3.${X1_INGRESS_DOMAIN}"}
+: ${X1_RAY_ENDPOINT:="ray.${X1_INGRESS_DOMAIN}:443"}
 
 export PREFECT_API_URL
 export PYTHONUNBUFFERED=1
@@ -48,16 +47,16 @@ function dump_logs() {(
 function smoke_check() {
   cd "$PROJECT_DIR/tests/smoke"
   echo "PREFECT_API_URL=$PREFECT_API_URL"
-  echo "S3_ENDPOINT=$S3_ENDPOINT"
-  echo "RAY_ENDPOINT=$RAY_ENDPOINT"
+  echo "X1_S3_ENDPOINT=$X1_S3_ENDPOINT"
+  echo "X1_RAY_ENDPOINT=$X1_RAY_ENDPOINT"
   pytest -v . \
-    --s3-endpoint $S3_ENDPOINT \
-    --ray-endpoint $RAY_ENDPOINT
+    --s3-endpoint $X1_S3_ENDPOINT \
+    --ray-endpoint $X1_RAY_ENDPOINT
 }
 
 function integration_tests() {
   cd "$PROJECT_DIR/tests/integration"
-  pytest -n 4 -v . --address $INGRESS_DOMAIN
+  pytest -n 4 -v . --address $X1_INGRESS_DOMAIN
 }
 
 function test_all() {
