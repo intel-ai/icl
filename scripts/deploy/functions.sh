@@ -18,7 +18,7 @@ function proxy_container_status() {
 function control_node() {
   local docker_cmd=(
     --rm
-    --volume $X1_ROOT:/work/x1
+    --volume $PROJECT_ROOT:/work/x1
     --user "$(id -u):$(id -g)"
     --env USER
     --workdir /work/x1
