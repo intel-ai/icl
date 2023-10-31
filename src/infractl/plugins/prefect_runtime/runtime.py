@@ -534,7 +534,7 @@ class PrefectRuntimeImplementation(
             job_args['command'] = [
                 'python',
                 '-m',
-                'infractl.prefect.engine',
+                'x1.prefect.engine',
                 '--block',
                 self._files_block,
                 '--script',
