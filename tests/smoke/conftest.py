@@ -11,7 +11,7 @@ from minio.error import InvalidResponseError
 from prefect.filesystems import RemoteFileSystem
 from prefect.infrastructure.kubernetes import KubernetesJob
 
-from tests.smoke.utils import MINIO_API_PORT, MINIO_WAIT_TIMEOUT_S, PREFECT_IMAGE_NAME
+from utils import MINIO_API_PORT, MINIO_WAIT_TIMEOUT_S, PREFECT_IMAGE_NAME
 
 
 def pytest_addoption(parser):

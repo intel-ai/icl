@@ -1,4 +1,4 @@
-name: Publish icl-x1 to pypi
+name: Publish infractl to pypi
 
 on:
   workflow_dispatch:
