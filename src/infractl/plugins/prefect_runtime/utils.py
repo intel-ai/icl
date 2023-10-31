@@ -5,7 +5,7 @@ from prefect.client.schemas.responses import SetStateStatus
 from prefect.exceptions import ObjectNotFound
 from prefect.states import State
 
-from x1.logging import get_logger
+from infractl.logging import get_logger
 
 logger = get_logger()
 
@@ -29,4 +29,4 @@ async def cancel(prefect_client, flow_id):
             + f"Reason: '{result.details.reason}'"
         )
 
-    logger.info("Flow run with id: '%s' was succcessfully scheduled for cancellation.", flow_id)
+    logger.info("Flow run with id: '%s' was successfully scheduled for cancellation.", flow_id)

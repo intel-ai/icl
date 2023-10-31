@@ -1,4 +1,4 @@
-"""X1 hub JupyterHub commands."""
+"""icl-hub JupyterHub commands."""
 
 import base64
 import subprocess
@@ -7,10 +7,10 @@ from typing import List, Optional
 import click
 from kubernetes import client, stream
 
-from x1.hub import config, kube, root
+from infractl.hub import config, kube, root
 
 JUPYTERHUB_NAMESPACE = 'jupyterhub'
-X1_HUB_NAMESPACE = 'x1-hub'
+ICL_HUB_NAMESPACE = 'icl-hub'
 
 
 @root.cli.group()
@@ -36,9 +36,9 @@ def list_users_cmd():
         print('\n'.join(users))
 
 
-@jupyterhub.command('update-x1')
-def update_x1_cmd():
-    """Update X1 in all JupyterHub sessions."""
+@jupyterhub.command('update-infractl')
+def update_infractl_cmd():
+    """Update infractl in all JupyterHub sessions."""
     for pod in get_user_pods(JUPYTERHUB_NAMESPACE):
         print('Pod:', pod.metadata.name)
         response = stream.stream(
@@ -46,7 +46,7 @@ def update_x1_cmd():
             pod.metadata.name,
             JUPYTERHUB_NAMESPACE,
             container='notebook',
-            command=['/bin/bash', '-ce', _update_x1_script()],
+            command=['/bin/bash', '-ce', _update_infractl_script()],
             stderr=True,
             stdin=False,
             stdout=True,
@@ -161,20 +161,20 @@ def list_users() -> List[str]:
     return response.read_stdout().strip().splitlines()
 
 
-def _update_x1_script() -> str:
-    """Returns Bash script to update x1."""
+def _update_infractl_script() -> str:
+    """Returns Bash script to update infractl."""
     return """
         source /home/jovyan/.conda/etc/profile.d/conda.sh
         conda env list --json | jq -r .envs[] | while read prefix; do
             echo activating conda environment at $prefix
             conda activate $prefix
-            if pip show -q x1 2>/dev/null; then
-                echo updating x1 at $prefix
+            if pip show -q infractl 2>/dev/null; then
+                echo updating infractl at $prefix
                 pip install \
                     --quiet \
                     --upgrade \
                     --extra-index-url http://pypi.glados.intel.com \
-                    --trusted-host pypi.glados.intel.com x1
+                    --trusted-host pypi.glados.intel.com infractl
             fi
         done 
     """
@@ -329,7 +329,9 @@ def enable_ssh(username: str, key: Optional[str] = None) -> str:
     if key:
         # if secret ssh-tunnel exists, use it to ssh to the tunnel and add user key
         try:
-            response = kube.api().core_v1().read_namespaced_secret('ssh-jumphost', X1_HUB_NAMESPACE)
+            response = (
+                kube.api().core_v1().read_namespaced_secret('ssh-jumphost', ICL_HUB_NAMESPACE)
+            )
             jumphost = base64.b64decode(response.data['host']).decode('utf-8')
             jumphost_key = base64.b64decode(response.data['key']).decode('utf-8')
             _add_jumphost_ssh_key(

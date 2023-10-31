@@ -1,4 +1,4 @@
-"""X1 settings."""
+"""ICL settings."""
 
 import dynaconf
 

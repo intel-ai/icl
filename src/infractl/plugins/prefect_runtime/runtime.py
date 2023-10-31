@@ -1,6 +1,7 @@
-"""X1 Prefect runtime implementation.
+"""ICL Prefect runtime implementation.
 
-Environment variable PREFECT_API_URL needs to be set to the URL of a Prefect server running in X1.
+Environment variable PREFECT_API_URL needs to be set to the URL of a Prefect server running in the
+cluster.
 
 """
 
@@ -23,11 +24,11 @@ from prefect import deployments, filesystems, infrastructure, settings
 from prefect.client import orchestration
 from prefect.server.api import server
 
-import x1
-import x1.base
-import x1.plugins.prefect_runtime.utils as prefect_utils
-from x1.logging import get_logger
-from x1.plugins import prefect_runtime, x1_infrastructure
+import infractl
+import infractl.base
+import infractl.plugins.prefect_runtime.utils as prefect_utils
+from infractl.logging import get_logger
+from infractl.plugins import icl_infrastructure, prefect_runtime
 
 logger = get_logger()
 
@@ -100,7 +101,7 @@ def stable_identity() -> str:
     return prefect_runtime.sanitize(identity)
 
 
-def upload_files(files: List[x1.base.RuntimeFile], target_path: pathlib.Path):
+def upload_files(files: List[infractl.base.RuntimeFile], target_path: pathlib.Path):
     """Uploads files to the specified directory."""
     # The specified directory has the following structure:
     # cwd.tar  - tarball to extract to the current directory in runtime.
@@ -135,7 +136,7 @@ class PrefectBlock(pydantic.BaseModel):
         return await self.block.save(self.name, **kwargs)
 
 
-class PrefectProgramRunner(x1.base.Runnable):
+class PrefectProgramRunner(infractl.base.Runnable):
     """Prefect program."""
 
     def __init__(
@@ -233,21 +234,23 @@ class PythonProgramRunner(PrefectProgramRunner):
         return await self.runner.run(parameters=flow_parameters, timeout=timeout, detach=detach)
 
 
-class PrefectRuntimeImplementation(x1.base.RuntimeImplementation, registration_name='prefect'):
+class PrefectRuntimeImplementation(
+    infractl.base.RuntimeImplementation, registration_name='prefect'
+):
     """Prefect runtime implementation."""
 
-    # Custom settings to use instead of global x1.base.SETTINGS
+    # Custom settings to use instead of global infractl.base.SETTINGS
     _settings: Optional[dynaconf.Dynaconf] = None
     _files_block: str = ''
     _script: str = ''
 
     def __init__(
         self,
-        runtime: Optional[x1.base.runtime.Runtime] = None,
-        infrastructure_implementation: Optional[x1.base.InfrastructureImplementation] = None,
+        runtime: Optional[infractl.base.runtime.Runtime] = None,
+        infrastructure_implementation: Optional[infractl.base.InfrastructureImplementation] = None,
     ):
         if not isinstance(
-            infrastructure_implementation, x1_infrastructure.X1InfrastructureImplementation
+            infrastructure_implementation, icl_infrastructure.IclInfrastructureImplementation
         ):
             raise NotImplementedError(
                 f'{infrastructure_implementation.__class__.__name__} is not supported'
@@ -312,7 +315,7 @@ class PrefectRuntimeImplementation(x1.base.RuntimeImplementation, registration_n
         manifest_filter: Optional[ManifestFilter] = None,
         name: Optional[str] = None,
         **kwargs,
-    ) -> x1.base.DeployedProgram:
+    ) -> infractl.base.DeployedProgram:
         """Deploys a Python program wrapped in a Prefect flow."""
         # Running a Prefect wrapper for a Python program requires a custom runtime and a custom
         # runner.
@@ -343,7 +346,7 @@ class PrefectRuntimeImplementation(x1.base.RuntimeImplementation, registration_n
         manifest_filter: Optional[ManifestFilter] = None,
         name: Optional[str] = None,
         **kwargs,
-    ) -> x1.base.DeployedProgram:
+    ) -> infractl.base.DeployedProgram:
         """Deploys a Prefect program."""
         if not isinstance(program, prefect_runtime.PrefectProgram):
             raise NotImplementedError(f'PrefectProgram expected, got {program.__class__.__name__}')
@@ -413,7 +416,7 @@ class PrefectRuntimeImplementation(x1.base.RuntimeImplementation, registration_n
 
         await prefect_deployment.apply(upload=False)
 
-        return x1.base.DeployedProgram(
+        return infractl.base.DeployedProgram(
             program=program,
             runner=PrefectProgramRunner(self.prefect_client, prefect_deployment),
         )
@@ -462,7 +465,7 @@ class PrefectRuntimeImplementation(x1.base.RuntimeImplementation, registration_n
         return block
 
     async def create_files_block(self, flow_name: str):
-        """Creates a Prefect storage block, upload files and script for x1.prefect.engine."""
+        """Creates a Prefect storage block, upload files and script for infractl.prefect.engine."""
         identity = stable_identity()
         storage_path = self.settings('prefect_storage_basepath', 's3://prefect')
         base_path = f'{storage_path}/_files/{identity}'
@@ -531,7 +534,7 @@ class PrefectRuntimeImplementation(x1.base.RuntimeImplementation, registration_n
             job_args['command'] = [
                 'python',
                 '-m',
-                'x1.prefect.engine',
+                'infractl.prefect.engine',
                 '--block',
                 self._files_block,
                 '--script',
@@ -599,7 +602,7 @@ class PrefectRuntimeImplementation(x1.base.RuntimeImplementation, registration_n
 
     def settings(self, name: str, default_value: Any = None) -> Any:
         """Return a setting value for this infrastructure address."""
-        current_settings = self._settings or x1.base.SETTINGS
+        current_settings = self._settings or infractl.base.SETTINGS
         return current_settings.get(
             f'{self.infrastructure_implementation.address}.{name}', default_value
         )

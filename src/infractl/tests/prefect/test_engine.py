@@ -5,7 +5,7 @@ import uuid
 import pytest
 from prefect.filesystems import LocalFileSystem
 
-from x1.prefect import engine
+from infractl.prefect import engine
 
 SPEC_FILE = """
 #!/bin/bash

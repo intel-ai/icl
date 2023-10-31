@@ -3,11 +3,11 @@ from unittest import mock
 
 import pytest
 
-import x1
-import x1.docker
-import x1.docker.remote
+import infractl
+import infractl.docker
+import infractl.docker.remote
 
-Image = x1.docker.Image
+Image = infractl.docker.Image
 
 
 def test_image_from_full_name():
@@ -42,16 +42,18 @@ def test_image_full_name():
 
 def test_registry_endpoint():
 
-    builder = x1.docker.builder(registry='localhost:5000')
+    builder = infractl.docker.builder(registry='localhost:5000')
     assert builder.registry_endpoint == 'https://localhost:5000'
 
-    builder = x1.docker.builder(registry='http://localhost:5000')
+    builder = infractl.docker.builder(registry='http://localhost:5000')
     assert builder.registry_endpoint == 'http://localhost:5000'
 
 
 @mock.patch.dict(os.environ, {'KUBERNETES_SERVICE_HOST': ''}, clear=True)
 def test_registry_endpoint_internal():
-    builder = x1.docker.builder(infrastructure=x1.infrastructure(address='nosuchhost.no'))
+    builder = infractl.docker.builder(
+        infrastructure=infractl.infrastructure(address='nosuchhost.no')
+    )
     assert (
         builder.registry_endpoint == 'http://docker-registry.docker-registry.svc.cluster.local:5000'
     )
@@ -59,26 +61,28 @@ def test_registry_endpoint_internal():
 
 @mock.patch.dict(os.environ, {}, clear=True)
 def test_registry_endpoint_external():
-    builder = x1.docker.builder(infrastructure=x1.infrastructure(address='nosuchhost.no'))
+    builder = infractl.docker.builder(
+        infrastructure=infractl.infrastructure(address='nosuchhost.no')
+    )
     assert builder.registry_endpoint == 'http://registry.nosuchhost.no'
 
 
 def test_builder_kind():
-    builder = x1.docker.builder(
-        infrastructure=x1.infrastructure(),
+    builder = infractl.docker.builder(
+        infrastructure=infractl.infrastructure(),
         kind='prefect',
     )
-    assert isinstance(builder, x1.docker.remote.Builder)
+    assert isinstance(builder, infractl.docker.remote.Builder)
 
 
 def test_unsupported_builder_kind():
     with pytest.raises(NotImplementedError):
-        _ = x1.docker.builder(
-            infrastructure=x1.infrastructure(),
-            kind=x1.docker.BuilderKind.KUBERNETES,
+        _ = infractl.docker.builder(
+            infrastructure=infractl.infrastructure(),
+            kind=infractl.docker.BuilderKind.KUBERNETES,
         )
     with pytest.raises(NotImplementedError):
-        _ = x1.docker.builder(
-            infrastructure=x1.infrastructure(),
+        _ = infractl.docker.builder(
+            infrastructure=infractl.infrastructure(),
             kind='no_such_kind',
         )

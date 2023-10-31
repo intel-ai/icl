@@ -10,12 +10,12 @@ import prefect
 import pytest
 from prefect import filesystems
 
-import x1
-import x1.base
-from x1.plugins import prefect_runtime
-from x1.plugins.prefect_runtime import runtime
+import infractl
+import infractl.base
+from infractl.plugins import prefect_runtime
+from infractl.plugins.prefect_runtime import runtime
 
-RuntimeFile = x1.base.RuntimeFile
+RuntimeFile = infractl.base.RuntimeFile
 
 FLOW3 = """
 import prefect
@@ -61,12 +61,12 @@ async def test_deploy(tmp_path: pathlib.Path):
     storage_path = tmp_path / 'storage'
     storage_path.mkdir(parents=True, exist_ok=True)
     # set basepath using "file" schema to use LocalFileSystem
-    x1.base.SETTINGS['local.prefect_storage_basepath'] = storage_path.as_uri()
+    infractl.base.SETTINGS['local.prefect_storage_basepath'] = storage_path.as_uri()
 
-    infrastructure = x1.infrastructure(address='local')
-    prefect_runtime = x1.runtime()
-    program = await x1.deploy(
-        x1.program(flow_path.as_posix()),
+    infrastructure = infractl.infrastructure(address='local')
+    prefect_runtime = infractl.runtime()
+    program = await infractl.deploy(
+        infractl.program(flow_path.as_posix()),
         runtime=prefect_runtime,
         infrastructure=infrastructure,
     )
@@ -86,12 +86,12 @@ async def test_flow_name_from_decorator(tmp_path: pathlib.Path):
     storage_path = tmp_path / 'storage'
     storage_path.mkdir(parents=True, exist_ok=True)
     # set basepath using "file" schema to use LocalFileSystem
-    x1.base.SETTINGS['local.prefect_storage_basepath'] = storage_path.as_uri()
+    infractl.base.SETTINGS['local.prefect_storage_basepath'] = storage_path.as_uri()
 
-    infrastructure = x1.infrastructure(address='local')
-    prefect_runtime = x1.runtime()
-    program = await x1.deploy(
-        x1.program(flow_path.as_posix()),
+    infrastructure = infractl.infrastructure(address='local')
+    prefect_runtime = infractl.runtime()
+    program = await infractl.deploy(
+        infractl.program(flow_path.as_posix()),
         runtime=prefect_runtime,
         infrastructure=infrastructure,
     )
@@ -110,12 +110,12 @@ async def test_flow_name_from_argument(tmp_path: pathlib.Path):
     storage_path = tmp_path / 'storage'
     storage_path.mkdir(parents=True, exist_ok=True)
     # set basepath using "file" schema to use LocalFileSystem
-    x1.base.SETTINGS['local.prefect_storage_basepath'] = storage_path.as_uri()
+    infractl.base.SETTINGS['local.prefect_storage_basepath'] = storage_path.as_uri()
 
-    infrastructure = x1.infrastructure(address='local')
-    prefect_runtime = x1.runtime()
-    program = await x1.deploy(
-        x1.program(flow_path.as_posix()),
+    infrastructure = infractl.infrastructure(address='local')
+    prefect_runtime = infractl.runtime()
+    program = await infractl.deploy(
+        infractl.program(flow_path.as_posix()),
         name='my-flow-4-renamed',
         runtime=prefect_runtime,
         infrastructure=infrastructure,
@@ -128,11 +128,11 @@ async def test_flow_name_from_argument(tmp_path: pathlib.Path):
 
 def test_prefect_runtime_implementation():
     gpu_count = 1
-    infrastructure = x1.infrastructure(address='local', gpus=gpu_count)
-    infrastructure_implementation = x1.base.get_infrastructure_implementation(infrastructure)
+    infrastructure = infractl.infrastructure(address='local', gpus=gpu_count)
+    infrastructure_implementation = infractl.base.get_infrastructure_implementation(infrastructure)
 
     runtime_implementation = runtime.PrefectRuntimeImplementation(
-        x1.runtime(), infrastructure_implementation
+        infractl.runtime(), infrastructure_implementation
     )
     data = {
         'local': {
@@ -183,9 +183,11 @@ def test_prefect_runtime_implementation():
 
 
 def test_prefect_runtime_customizations():
-    infrastructure_implementation = x1.base.get_infrastructure_implementation(x1.infrastructure())
+    infrastructure_implementation = infractl.base.get_infrastructure_implementation(
+        infractl.infrastructure()
+    )
     runtime_implementation = runtime.PrefectRuntimeImplementation(
-        runtime=x1.runtime(),
+        runtime=infractl.runtime(),
         infrastructure_implementation=infrastructure_implementation,
     )
 
@@ -211,10 +213,10 @@ def test_prefect_runtime_customizations():
 
 
 def test_prefect_runtime_implementation_environment():
-    infrastructure = x1.infrastructure(address='local')
-    infrastructure_implementation = x1.base.get_infrastructure_implementation(infrastructure)
+    infrastructure = infractl.infrastructure(address='local')
+    infrastructure_implementation = infractl.base.get_infrastructure_implementation(infrastructure)
     runtime_implementation = runtime.PrefectRuntimeImplementation(
-        x1.runtime(environment={'foo': 'bar'}), infrastructure_implementation
+        infractl.runtime(environment={'foo': 'bar'}), infrastructure_implementation
     )
 
     kubernetes_job_block = runtime_implementation.kubernetes_job()
@@ -229,10 +231,10 @@ def test_prefect_runtime_implementation_environment():
 
 
 def test_prefect_runtime_implementation_dependencies():
-    infrastructure = x1.infrastructure(address='local')
-    infrastructure_implementation = x1.base.get_infrastructure_implementation(infrastructure)
+    infrastructure = infractl.infrastructure(address='local')
+    infrastructure_implementation = infractl.base.get_infrastructure_implementation(infrastructure)
     runtime_implementation = runtime.PrefectRuntimeImplementation(
-        x1.runtime(dependencies={'pip': ['boto', 'botocore']}), infrastructure_implementation
+        infractl.runtime(dependencies={'pip': ['boto', 'botocore']}), infrastructure_implementation
     )
 
     kubernetes_job_block = runtime_implementation.kubernetes_job()
@@ -339,10 +341,10 @@ async def test_prefect_runtime_upload_files(tmp_path: pathlib.Path, set_cwd):
         block=filesystems.LocalFileSystem(basepath=storage_path),
     )
 
-    infrastructure = x1.infrastructure(address='local')
-    infrastructure_implementation = x1.base.get_infrastructure_implementation(infrastructure)
+    infrastructure = infractl.infrastructure(address='local')
+    infrastructure_implementation = infractl.base.get_infrastructure_implementation(infrastructure)
     runtime_implementation = runtime.PrefectRuntimeImplementation(
-        x1.runtime(files=['file1']),
+        infractl.runtime(files=['file1']),
         infrastructure_implementation,
     )
 
@@ -359,8 +361,8 @@ async def test_prefect_runtime_upload_files(tmp_path: pathlib.Path, set_cwd):
 
 
 @pytest.mark.asyncio
-async def test_x1_deploy_timeout(tmp_path: pathlib.Path, set_cwd):
-    from x1.plugins.prefect_runtime.runtime import PrefectRuntimeImplementation
+async def test_infractl_deploy_timeout(tmp_path: pathlib.Path, set_cwd):
+    from infractl.plugins.prefect_runtime.runtime import PrefectRuntimeImplementation
 
     flow_path = tmp_path / 'flow.py'
     flow_path.write_text(FLOW3)
@@ -374,19 +376,19 @@ async def test_x1_deploy_timeout(tmp_path: pathlib.Path, set_cwd):
     with set_cwd(flow_path.parent):
         with patch.object(PrefectRuntimeImplementation, 'deploy', new=deploy_and_sleep):
             with pytest.raises(asyncio.exceptions.TimeoutError):
-                await x1.deploy(x1.program('flow.py'), timeout=0.1)
+                await infractl.deploy(infractl.program('flow.py'), timeout=0.1)
 
 
 @pytest.mark.asyncio
-async def test_x1_program_run_timeout(tmp_path: pathlib.Path, set_cwd):
-    from x1.plugins.prefect_runtime.runtime import PrefectProgramRunner
+async def test_infractl_program_run_timeout(tmp_path: pathlib.Path, set_cwd):
+    from infractl.plugins.prefect_runtime.runtime import PrefectProgramRunner
 
     flow_path = tmp_path / 'flow.py'
     flow_path.write_text(FLOW3)
 
     with set_cwd(flow_path.parent):
-        program = x1.base.DeployedProgram(
-            program=x1.program('flow.py'),
+        program = infractl.base.DeployedProgram(
+            program=infractl.program('flow.py'),
             runner=PrefectProgramRunner(Mock(), Mock()),
         )
 

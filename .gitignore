@@ -6,7 +6,7 @@ vm-ubuntu/generated
 
 baremetal/generated
 
-**/.coverage/
+**/.coverage
 **/__pycache__/
 **/.pytest_cache/
 

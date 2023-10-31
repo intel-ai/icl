@@ -1,4 +1,4 @@
-"""Main module for X1 logging."""
+"""ICL logging."""
 
 from .logging import get_logger
 

@@ -1,22 +1,22 @@
 #!/usr/bin/env python3
 
-"""Deploys X1 cluster to AWS.
+"""Deploys ICL cluster to AWS.
 
-Uses Terraform to create a new EKS cluster and deploy X1 workloads
+Uses Terraform to create a new EKS cluster and deploy infractl workloads
 """
 
 import logging
 
 import click
 
-from x1.deploy.aws import vpc
+from infractl.deploy.aws import vpc
 
 logger = logging.getLogger(__name__)
 
 
 @click.group()
 def cli():
-    """Tool to manage X1 deployments in AWS."""
+    """Tool to manage ICL deployments in AWS."""
 
 
 @cli.command()

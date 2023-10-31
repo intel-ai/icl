@@ -1,4 +1,4 @@
-"""X1 Prefect program management."""
+"""ICL Prefect program management."""
 
 from __future__ import annotations
 
@@ -15,10 +15,10 @@ from prefect.client import orchestration
 from prefect.client.schemas.filters import LogFilter
 from prefect.utilities import importtools
 
-import x1.base
-import x1.plugins.prefect_runtime.utils as prefect_utils
-from x1.logging import get_logger
-from x1.plugins import prefect_runtime
+import infractl.base
+import infractl.plugins.prefect_runtime.utils as prefect_utils
+from infractl.logging import get_logger
+from infractl.plugins import prefect_runtime
 
 logger = get_logger()
 
@@ -38,7 +38,7 @@ def load_flows(path: str) -> Dict[str, prefect.Flow]:
     return flows
 
 
-class PrefectProgramRun(x1.base.ProgramRun):
+class PrefectProgramRun(infractl.base.ProgramRun):
     """Class for checking status and getting results."""
 
     _flow_run: prefect.client.schemas.FlowRun = None
@@ -180,11 +180,11 @@ class PrefectProgramRun(x1.base.ProgramRun):
         await prefect_utils.cancel(self._prefect_client, self.get_flow_run().id)
 
 
-class PrefectProgram(x1.base.Program):
+class PrefectProgram(infractl.base.Program):
     """Prefect program."""
 
     flow: prefect.Flow
-    deployment_name: str = 'x1'
+    deployment_name: str = 'infractl'
 
     def __init__(
         self,
@@ -201,11 +201,11 @@ class PythonProgram(PrefectProgram):
 
     program: str = ''
     entrypoint: Optional[str] = None
-    files: List[x1.base.RuntimeFile] = []
+    files: List[infractl.base.RuntimeFile] = []
 
     def __init__(self, path: str, name: Optional[str] = None):
         # pylint: disable=import-outside-toplevel, unused-import
-        from x1.prefect import wrapper
+        from infractl.prefect import wrapper
 
         program = load_program(path=wrapper.wrap)
         program.flow.name = prefect_runtime.sanitize(name or pathlib.Path(path).stem)
@@ -214,7 +214,7 @@ class PythonProgram(PrefectProgram):
         program_path = pathlib.Path(path)
         self.program = program_path.name
         self.entrypoint = name
-        self.files = [x1.base.RuntimeFile(src=str(program_path))]
+        self.files = [infractl.base.RuntimeFile(src=str(program_path))]
 
 
 def load_program(

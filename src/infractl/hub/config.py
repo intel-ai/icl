@@ -1,4 +1,4 @@
-"""X1 hub configuration."""
+"""icl-hub configuration."""
 
 import pathlib
 import tempfile
@@ -7,14 +7,14 @@ from typing import Any, Dict, Optional
 import dynaconf
 import dynaconf.loaders
 
-from x1.hub import root
+from infractl.hub import root
 
 _CONFIG: Optional[dynaconf.Dynaconf] = None
 
 
 @root.cli.group()
 def config():
-    """Manage X1 hub configuration."""
+    """Manage ICL hub configuration."""
 
 
 @config.command()

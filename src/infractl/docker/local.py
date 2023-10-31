@@ -8,13 +8,13 @@ import docker.errors
 import python_docker.base
 import python_docker.registry
 
-import x1.docker
-import x1.logging
+import infractl.docker
+import infractl.logging
 
-logger = x1.logging.get_logger(__name__)
+logger = infractl.logging.get_logger(__name__)
 
 
-class Builder(x1.docker.Builder):
+class Builder(infractl.docker.Builder):
     """Builds and pushes a Docker image to Docker registry using a local Docker daemon."""
 
     def __init__(self, **kwargs):
@@ -22,9 +22,9 @@ class Builder(x1.docker.Builder):
 
     def build(
         self,
-        stream_callback: Optional[x1.docker.StreamCallback] = x1.docker.stdout_callback,
+        stream_callback: Optional[infractl.docker.StreamCallback] = infractl.docker.stdout_callback,
         **kwargs,
-    ) -> x1.docker.Image:
+    ) -> infractl.docker.Image:
         """Builds and pushes a Docker image to Docker registry using a local Docker daemon.
 
         Arguments:
@@ -48,7 +48,7 @@ class Builder(x1.docker.Builder):
         resp = client.api.build(**client_kwargs)
 
         if isinstance(resp, str):
-            return x1.docker.Image.from_full_name(full_name=resp)
+            return infractl.docker.Image.from_full_name(full_name=resp)
 
         last_event = None
         image_id = None
@@ -65,13 +65,13 @@ class Builder(x1.docker.Builder):
             last_event = chunk
 
         if image_id:
-            image = x1.docker.Image.from_full_name(id=image_id, full_name=kwargs.get('tag'))
+            image = infractl.docker.Image.from_full_name(id=image_id, full_name=kwargs.get('tag'))
             self.push(image)
             return image
 
         raise docker.errors.BuildError(last_event or 'Unknown', result_stream)
 
-    def push(self, image: x1.docker.Image):
+    def push(self, image: infractl.docker.Image):
         """Pushes the existing Docker image to registry."""
         image_id = image.full_name
         client = docker.from_env()

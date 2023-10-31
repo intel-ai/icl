@@ -1,13 +1,13 @@
 """Prefect specific module."""
 import re
 
-from x1.plugins.prefect_runtime.program import (
+from infractl.plugins.prefect_runtime.program import (
     PrefectProgram,
     PrefectProgramRun,
     PythonProgram,
     load_program,
 )
-from x1.plugins.prefect_runtime.runtime import PrefectRuntimeImplementation
+from infractl.plugins.prefect_runtime.runtime import PrefectRuntimeImplementation
 
 
 def sanitize(identity: str) -> str:

@@ -1,6 +1,6 @@
 """X1 Docker API."""
 
-from x1.docker.builder import (
+from infractl.docker.builder import (
     Builder,
     BuilderError,
     BuilderKind,

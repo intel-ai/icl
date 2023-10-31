@@ -1,4 +1,4 @@
-"""X1 Infrastructure."""
+"""ICL infrastructure."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ from typing import Optional, Tuple, Union
 
 import pydantic
 
-from x1.base import registry
+from infractl.base import registry
 
 
 class Infrastructure(pydantic.BaseModel, extra=pydantic.Extra.allow):

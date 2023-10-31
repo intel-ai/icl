@@ -1,4 +1,4 @@
-"""X1 program management."""
+"""ICL program."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional, Union
 
 
 class ProgramRun:
-    """Class for representing the results and state of X1 program runs."""
+    """Class for representing the results and state of ICL program runs."""
 
     @abc.abstractmethod
     async def wait(self, poll_interval=5) -> None:

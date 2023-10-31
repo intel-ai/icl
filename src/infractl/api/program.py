@@ -1,9 +1,9 @@
-"""X1 creating program functionality."""
+"""ICL program."""
 
-import x1.base
+import infractl.base
 
 
-def program(*args, kind: str = 'prefect', **kwargs) -> x1.base.Program:
+def program(*args, kind: str = 'prefect', **kwargs) -> infractl.base.Program:
     """Create a program.
 
     Args:
@@ -23,7 +23,7 @@ def program(*args, kind: str = 'prefect', **kwargs) -> x1.base.Program:
     """
     if kind == 'prefect':
         # pylint: disable=import-outside-toplevel
-        from x1.plugins import prefect_runtime
+        from infractl.plugins import prefect_runtime
 
         return prefect_runtime.load_program(*args, **kwargs)
 

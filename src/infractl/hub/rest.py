@@ -1,10 +1,10 @@
-"""X1 hub REST API."""
+"""icl-hub REST API."""
 from typing import Optional
 
 import fastapi
 import pydantic
 
-from x1.hub import config, jupyterhub
+from infractl.hub import config, jupyterhub
 
 app = fastapi.FastAPI()
 

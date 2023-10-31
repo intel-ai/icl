@@ -10,7 +10,6 @@ from minio import Minio
 from minio.error import InvalidResponseError
 from prefect.filesystems import RemoteFileSystem
 from prefect.infrastructure.kubernetes import KubernetesJob
-
 from utils import MINIO_API_PORT, MINIO_WAIT_TIMEOUT_S, PREFECT_IMAGE_NAME
 
 

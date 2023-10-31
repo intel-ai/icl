@@ -1,10 +1,10 @@
-"""X1 Python API."""
+"""ICL Python API."""
 
 
-from x1.api.deploy import deploy
-from x1.api.infrastructure import infrastructure
-from x1.api.program import program
-from x1.api.runtime import runtime
+from infractl.api.deploy import deploy
+from infractl.api.infrastructure import infrastructure
+from infractl.api.program import program
+from infractl.api.runtime import runtime
 
 __all__ = [
     'infrastructure',

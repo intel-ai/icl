@@ -1,13 +1,13 @@
-"""X1 Docker API.
+"""ICL Docker API.
 
 This API allows building custom Docker images and pushing them to a Docker registry.
 
 * It leverages the existing local Docker, if exists.
-* If Docker cannot be used, it uses the existing X1 cluster to build an image.
-* It can be used inside (for example, in JupyterLab) and outside an X1 cluster (for example, from
+* If Docker cannot be used, it uses the existing ICL cluster to build an image.
+* It can be used inside (for example, in JupyterLab) and outside an ICL cluster (for example, from
   user's laptop).
-* It leverages the existing infrastructure to access X1 cluster and its resources.
-* It supports direct K8s cluster API and X1 cluster API, when the former is not available.
+* It leverages the existing infrastructure to access ICL cluster and its resources.
+* It supports direct K8s cluster API and ICL cluster API, when the former is not available.
 """
 
 from __future__ import annotations
@@ -22,9 +22,9 @@ import pydantic
 import python_docker.registry
 import requests.exceptions
 
-import x1.api
-import x1.api.infrastructure
-import x1.base
+import infractl.api
+import infractl.api.infrastructure
+import infractl.base
 
 StreamCallback = Callable[[str], None]
 
@@ -116,22 +116,22 @@ class Image(pydantic.BaseModel):
 class Builder:
     """Builds and pushes a Docker image to Docker registry."""
 
-    infrastructure: x1.base.InfrastructureImplementation
+    infrastructure: infractl.base.InfrastructureImplementation
     registry: Optional[str] = None
 
     def __init__(
         self,
-        infrastructure: Optional[x1.base.Infrastructure] = None,
+        infrastructure: Optional[infractl.base.Infrastructure] = None,
         registry: Optional[str] = None,
     ):
         """Docker builder.
 
         Args:
-            infrastructure: X1 infrastructure, default one is used when not specified.
+            infrastructure: ICL infrastructure, default one is used when not specified.
             registry: Docker registry, default one from infrastructure is used when not specified.
         """
-        self.infrastructure = x1.base.get_infrastructure_implementation(
-            infrastructure or x1.api.infrastructure.default_infrastructure()
+        self.infrastructure = infractl.base.get_infrastructure_implementation(
+            infrastructure or infractl.api.infrastructure.default_infrastructure()
         )
         self.registry = registry
 
@@ -140,7 +140,7 @@ class Builder:
 
     def image_exists(self, tag: str) -> bool:
         """Checks if the image exists in the registry."""
-        image = x1.docker.Image.from_full_name(full_name=tag)
+        image = infractl.docker.Image.from_full_name(full_name=tag)
         pd_registry = python_docker.registry.Registry(hostname=self.registry_endpoint)
         try:
             pd_registry.get_manifest(image=image.name, tag=image.tag)
@@ -183,18 +183,18 @@ class Builder:
     def settings(self, name: str, default_value: Any = None) -> Any:
         """Return a setting value for this infrastructure address."""
         # TODO: this needs to be supported by settings (see also HCL configuration)
-        return x1.base.SETTINGS.get(f'{self.infrastructure.address}.{name}', default_value)
+        return infractl.base.SETTINGS.get(f'{self.infrastructure.address}.{name}', default_value)
 
 
 def builder(
-    infrastructure: Optional[x1.base.Infrastructure] = None,
+    infrastructure: Optional[infractl.base.Infrastructure] = None,
     registry: Optional[str] = None,
     kind: Union[str | BuilderKind] = BuilderKind.AUTO,
 ):
     """Returns a new Docker image builder.
 
     Args:
-        infrastructure: X1 infrastructure, default one is used when not specified.
+        infrastructure: ICL infrastructure, default one is used when not specified.
         registry: Docker registry, default one from infrastructure is used when not specified.
         kind: kind of Docker builder.
     """
@@ -214,13 +214,13 @@ def builder(
 
     if kind == BuilderKind.DOCKER:
         # pylint: disable=import-outside-toplevel, unused-import
-        from x1.docker import local
+        from infractl.docker import local
 
         return local.Builder(infrastructure=infrastructure, registry=registry)
 
     if kind == BuilderKind.PREFECT:
         # pylint: disable=import-outside-toplevel, unused-import
-        from x1.docker import remote
+        from infractl.docker import remote
 
         return remote.Builder(infrastructure=infrastructure, registry=registry)
 

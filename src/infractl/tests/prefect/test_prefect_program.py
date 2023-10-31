@@ -2,8 +2,8 @@ import pathlib
 
 import pytest
 
-import x1
-from x1.plugins.prefect_runtime.program import FlowError, PythonProgram, load_program
+import infractl
+from infractl.plugins.prefect_runtime.program import FlowError, PythonProgram, load_program
 
 FLOW1 = """
 import prefect

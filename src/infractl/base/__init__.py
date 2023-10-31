@@ -1,17 +1,17 @@
-"""X1 base module."""
+"""ICL base."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from x1.base.infrastructure import (
+from infractl.base.infrastructure import (
     Infrastructure,
     InfrastructureImplementation,
     get_infrastructure_implementation,
 )
-from x1.base.program import DeployedProgram, Program, ProgramRun, Runnable
-from x1.base.registry import RegisteredClass
-from x1.base.runtime import (
+from infractl.base.program import DeployedProgram, Program, ProgramRun, Runnable
+from infractl.base.registry import RegisteredClass
+from infractl.base.runtime import (
     Runtime,
     RuntimeDependencies,
     RuntimeFile,
@@ -28,7 +28,7 @@ SETTINGS: dynaconf.Dynaconf
 def _settings() -> dynaconf.Dynaconf:
     """Loads settings from the nested package to avoid import-time initialization."""
     # pylint: disable=import-outside-toplevel
-    import x1.base.settings as base_settings
+    import infractl.base.settings as base_settings
 
     globals()['SETTINGS'] = base_settings.SETTINGS
     return base_settings.SETTINGS

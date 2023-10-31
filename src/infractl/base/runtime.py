@@ -1,4 +1,4 @@
-"""X1 runtime management."""
+"""ICL runtime."""
 
 from __future__ import annotations
 
@@ -8,8 +8,8 @@ from typing import Dict, List, Optional
 
 import pydantic
 
-import x1.base.infrastructure
-from x1.base import registry
+import infractl.base.infrastructure
+from infractl.base import registry
 
 
 class RuntimeDependencies(pydantic.BaseModel):
@@ -119,24 +119,26 @@ class RuntimeImplementation(metaclass=registry.RegisteredClass):
 
     def __init__(
         self,
-        runtime: Optional[x1.base.runtime.Runtime] = None,
+        runtime: Optional[infractl.base.runtime.Runtime] = None,
         infrastructure_implementation: Optional[
-            x1.base.infrastructure.InfrastructureImplementation
+            infractl.base.infrastructure.InfrastructureImplementation
         ] = None,
     ):
         self.runtime = runtime
         self.infrastructure_implementation = infrastructure_implementation
 
     @abc.abstractmethod
-    async def deploy(self, program: x1.base.program.Program, **kwargs) -> x1.base.DeployedProgram:
+    async def deploy(
+        self, program: infractl.base.program.Program, **kwargs
+    ) -> infractl.base.DeployedProgram:
         """Deploys a program."""
 
 
 def get_runtime_implementation(
     runtime: Runtime,
-    infrastructure_implementation: x1.base.infrastructure.InfrastructureImplementation,
+    infrastructure_implementation: infractl.base.infrastructure.InfrastructureImplementation,
 ) -> RuntimeImplementation:
-    runtime_implementation_class = x1.base.RegisteredClass.get(
-        x1.base.RuntimeImplementation, runtime.kind
+    runtime_implementation_class = infractl.base.RegisteredClass.get(
+        infractl.base.RuntimeImplementation, runtime.kind
     )
     return runtime_implementation_class(runtime, infrastructure_implementation)

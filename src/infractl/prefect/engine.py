@@ -24,13 +24,13 @@ async def run_script(block: str, script: str):
     # pylint: disable=import-outside-toplevel
     import prefect.blocks.core as blocks
 
-    print(f'[x1.prefect.engine] Loading Prefect storage block {block}')
+    print(f'[infractl.prefect.engine] Loading Prefect storage block {block}')
     storage = await blocks.Block.load(block)
     with tempfile.TemporaryDirectory() as dirname:
         await storage.get_directory(local_path=dirname)
         script_path = pathlib.Path(dirname) / script
         if script_path.exists():
-            print(f'[x1.prefect.engine] Running script {script}')
+            print(f'[infractl.prefect.engine] Running script {script}')
             subprocess.run(
                 ['/bin/bash', '-x', script_path.absolute()],
                 stdout=sys.stdout,
@@ -38,7 +38,7 @@ async def run_script(block: str, script: str):
                 check=True,
             )
         else:
-            print(f'[x1.prefect.engine] Script {block} not found')
+            print(f'[infractl.prefect.engine] Script {block} not found')
 
 
 def create_parser() -> argparse.ArgumentParser:

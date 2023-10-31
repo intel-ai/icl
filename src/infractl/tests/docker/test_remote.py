@@ -1,8 +1,8 @@
 import dynaconf
 
-import x1
-import x1.base
-import x1.docker.remote
+import infractl
+import infractl.base
+import infractl.docker.remote
 
 
 def test_manifest_filter():
@@ -14,8 +14,10 @@ def test_manifest_filter():
             }
         }
     )
-    x1.base.SETTINGS = settings
-    builder = x1.docker.remote.Builder(infrastructure=x1.infrastructure(address='localtest.me'))
+    infractl.base.SETTINGS = settings
+    builder = infractl.docker.remote.Builder(
+        infrastructure=infractl.infrastructure(address='localtest.me')
+    )
     manifest = builder.manifest_filter(
         {
             'apiVersion': 'batch/v1',

@@ -1,4 +1,4 @@
-"""Builds and pushes a Docker image to Docker registry using X1 cluster.
+"""Builds and pushes a Docker image to Docker registry using ICL cluster.
 
 1. Upload the specified context recursively (with .dockerignore) to the cluster storage.
 2. Create a Kubernetes Job that
@@ -14,14 +14,14 @@ import re
 import warnings
 from typing import Any, Dict, Optional
 
-import x1
-import x1.base
-import x1.docker
-import x1.logging
+import infractl
+import infractl.base
+import infractl.docker
+import infractl.logging
 
 
-class Builder(x1.docker.Builder):
-    """Builds and pushes a Docker image to Docker registry using X1 cluster."""
+class Builder(infractl.docker.Builder):
+    """Builds and pushes a Docker image to Docker registry using ICL cluster."""
 
     logger: logging.Logger
 
@@ -30,10 +30,10 @@ class Builder(x1.docker.Builder):
 
     def build(
         self,
-        stream_callback: Optional[x1.docker.StreamCallback] = x1.docker.stdout_callback,
+        stream_callback: Optional[infractl.docker.StreamCallback] = infractl.docker.stdout_callback,
         **kwargs,
-    ) -> x1.docker.Image:
-        """Builds and pushes a Docker image to Docker registry using X1 cluster.
+    ) -> infractl.docker.Image:
+        """Builds and pushes a Docker image to Docker registry using ICL cluster.
 
         Arguments:
         https://docker-py.readthedocs.io/en/stable/images.html#docker.models.images.ImageCollection.build
@@ -62,16 +62,16 @@ class Builder(x1.docker.Builder):
             warnings.simplefilter('ignore', category=UserWarning)
             futures.sync(self._async_build, **build_args)
 
-        return x1.docker.Image.from_full_name(kwargs['tag'])
+        return infractl.docker.Image.from_full_name(kwargs['tag'])
 
     async def _async_build(self, **build_args):
         """Deploys and runs Prefect builder."""
-        self.logger = x1.logging.get_logger(__name__)
+        self.logger = infractl.logging.get_logger(__name__)
 
         # pylint: disable=import-outside-toplevel, unused-import
-        from x1.docker.prefect import builder
+        from infractl.docker.prefect import builder
 
-        runtime = x1.runtime(
+        runtime = infractl.runtime(
             # TODO: consider using a custom image for faster start
             dependencies={
                 'pip': ['psutil'],
@@ -82,8 +82,8 @@ class Builder(x1.docker.Builder):
         )
 
         self.logger.info('Deploying Prefect builder flow')
-        program = await x1.deploy(
-            x1.program(builder.build),
+        program = await infractl.deploy(
+            infractl.program(builder.build),
             runtime=runtime,
             infrastructure=self.infrastructure.infrastructure,
             manifest_filter=self.manifest_filter,
@@ -101,7 +101,7 @@ class Builder(x1.docker.Builder):
         self.logger.info('Prefect flow run: %s', flow_run)
         await flow_run.stream_logs()
         if not flow_run.is_completed():
-            raise x1.docker.BuilderError(f'Remote build failed in {flow_run}')
+            raise infractl.docker.BuilderError(f'Remote build failed in {flow_run}')
 
     def manifest_filter(self, manifest: Dict[str, Any]) -> Dict[str, Any]:
         """Filters Kubernetes Job manifest."""

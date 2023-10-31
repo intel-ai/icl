@@ -1,17 +1,20 @@
-"""Infrastructure for X1 cluster."""
+"""Infrastructure for ICL cluster."""
 
 import functools
 from typing import Optional, Tuple
 
 import dynaconf
 
-import x1.base
+import infractl.base
 
 
-class X1InfrastructureImplementation(x1.base.InfrastructureImplementation, registration_name='X1'):
-    """X1 Infrastructure specification."""
+class IclInfrastructureImplementation(
+    infractl.base.InfrastructureImplementation,
+    registration_name='ICL',
+):
+    """ICL Infrastructure specification."""
 
-    # Custom settings to use instead of global x1.base.SETTINGS
+    # Custom settings to use instead of global infractl.base.SETTINGS
     _settings: Optional[dynaconf.Dynaconf] = None
 
     @functools.cached_property
@@ -20,7 +23,7 @@ class X1InfrastructureImplementation(x1.base.InfrastructureImplementation, regis
         target = self.infrastructure
         if target.address:
             return target.address
-        current_settings = self._settings or x1.base.SETTINGS
+        current_settings = self._settings or infractl.base.SETTINGS
         return current_settings.get('default_address', 'localtest.me')
 
     @functools.cached_property
@@ -29,5 +32,5 @@ class X1InfrastructureImplementation(x1.base.InfrastructureImplementation, regis
         target = self.infrastructure
         if target.gpus:
             return target.gpus
-        current_settings = self._settings or x1.base.SETTINGS
+        current_settings = self._settings or infractl.base.SETTINGS
         return current_settings.get('default_gpus_limits', None)

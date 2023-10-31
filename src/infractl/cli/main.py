@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""X1 CLI."""
+"""ICL CLI."""
 
 import logging
 import os
@@ -10,12 +10,12 @@ from typing import Optional
 import click
 import requests
 
-import x1.base
+import infractl.base
 
 
 @click.group()
 def main():
-    """X1 CLI tool."""
+    """ICL CLI tool."""
     logging.basicConfig(level=logging.INFO)
 
 
@@ -47,11 +47,11 @@ def disable_ssh_cmd():
 
 
 def get_hub_url() -> str:
-    """Returns X1 hub address."""
+    """Returns icl-hub address."""
     # TODO: support HTTP and HTTPS schemas, move to upper level
-    return x1.base.SETTINGS.get(
+    return infractl.base.SETTINGS.get(
         'hub_url',
-        f'http://hub.{x1.base.SETTINGS.get("default_address", "localtest.me")}',
+        f'http://hub.{infractl.base.SETTINGS.get("default_address", "localtest.me")}',
     )
 
 

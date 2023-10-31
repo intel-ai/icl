@@ -15,9 +15,9 @@ from io import StringIO
 from unittest.mock import patch
 
 import pytest
+from flows.flow2 import flow2
 
 import infractl
-from flows.flow2 import flow2
 
 
 @pytest.mark.asyncio

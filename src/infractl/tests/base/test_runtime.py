@@ -1,20 +1,20 @@
 import pathlib
 
-from x1.base import runtime
+from infractl.base import runtime
 
 
 def test_runtime_dependencies():
-    deps = runtime.RuntimeDependencies(pip=['x1'])
-    assert deps.pip == ['x1'], 'pip is set correctly'
+    deps = runtime.RuntimeDependencies(pip=['infractl'])
+    assert deps.pip == ['infractl'], 'pip is set correctly'
 
 
 def test_runtime_dependencies_from_dict():
     deps = runtime.parse_dependencies(
         {
-            'pip': ['x1'],
+            'pip': ['infractl'],
         }
     )
-    assert deps.pip == ['x1'], 'pip is set correctly'
+    assert deps.pip == ['infractl'], 'pip is set correctly'
 
 
 def test_runtime_dependencies_from_empty_dict():
