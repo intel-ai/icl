@@ -7,7 +7,7 @@ from prefect.deployments import Deployment
 from prefect.filesystems import RemoteFileSystem
 from prefect.infrastructure.kubernetes import KubernetesJob
 
-from tests.smoke.utils import FLOW_RUN_TIMEOUT_S, prefect_test_flow
+from utils import FLOW_RUN_TIMEOUT_S, prefect_test_flow
 
 
 class PrefectError(Exception):
