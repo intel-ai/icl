@@ -15,6 +15,6 @@ cd ~/x1
 ansible-playbook --inventory ~/generated/kubespray-inventory/inventory.yaml ansible/playbooks/fetch-kubeconfig.yaml
 ansible-playbook --inventory ~/generated/kubespray-inventory/inventory.yaml ansible/playbooks/terraform_tfvars.yaml
 
-cd ~/x1/terraform/x1
+cd ~/x1/terraform/icl
 terraform init -input=false
 terraform apply -input=false -auto-approve -var-file ~/generated/terraform.tfvars
