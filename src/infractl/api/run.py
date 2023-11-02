@@ -1,11 +1,13 @@
 """ICL run (shortcut)"""
 
 from __future__ import annotations
+
 from typing import Any, Dict, List, Optional, Union
-from infractl.api.deploy import deploy
+
 import infractl.api.infrastructure
 import infractl.api.runtime
 import infractl.base
+from infractl.api.deploy import deploy
 
 
 async def run(
@@ -23,7 +25,7 @@ async def run(
         program: a program to deploy, can be a file name, ICL program or Prefect Flow instance.
         runtime: an optional program runtime to use for deployment.
         infrastructure: an optional infrastructure to use for deployment.
-        timeout: an optional timeout to use for deployment. This value is the same 
+        timeout: an optional timeout to use for deployment. This value is the same
                  for deploy and run functions.
         kwargs: other parameters for deployment.
     """
