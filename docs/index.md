@@ -35,6 +35,8 @@ How ICL helps you or your team:
   * [ICL cluster on virtual machines](deployment.md#virtual-nodes)
   * [ICL cluster on bare-metal machines](deployment.md#bare-metal-nodes)
 * [infractl](infractl.md)
+  * [infractl infrastructure](infractl.md#infrastructure-parameters)
+  * [infractl runtime](infractl.md#runtime-parameters)
   * [infractl runtime files](infractl-runtime-files.md)
   * [infractl build](infractl-build.md)
 * ICL
