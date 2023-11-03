@@ -156,5 +156,5 @@ def test_notebook_in_jupyter_session(address):
         JUPYTERHUB_NAMESPACE,
         ["/bin/cat", "/tmp/test_notebook.nbconvert.ipynb"],
     )
-    asser_value = "\'x1   "
+    asser_value = "\'infractl   "
     assert asser_value in output, f"There is no {asser_value} in output: {output}"
