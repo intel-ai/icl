@@ -360,6 +360,16 @@ class PrefectRuntimeImplementation(
             prefect_flow = prefect_flow.with_options(name=name)
 
         prefect_storage_block = await self.create_code_block(prefect_flow.name)
+
+        if prefect_flow.persist_result:
+            # default result storage doesn't work
+            prefect_flow = prefect_flow.with_options(result_storage=prefect_storage_block)
+            logger.info(
+                'Update Flow: "%s" with new result_storage: "%s"',
+                prefect_flow,
+                prefect_storage_block,
+            )
+
         if self.runtime.files:
             await self.create_files_block(prefect_flow.name)
         prefect_infrastructure_block = await self.create_infrastructure_block(
