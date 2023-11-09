@@ -16,9 +16,9 @@ from prefect.client.schemas.filters import LogFilter
 from prefect.utilities import importtools
 
 import infractl.base
+import infractl.identity
 import infractl.plugins.prefect_runtime.utils as prefect_utils
 from infractl.logging import get_logger
-from infractl.plugins import prefect_runtime
 
 logger = get_logger()
 
@@ -211,7 +211,7 @@ class PythonProgram(PrefectProgram):
         from infractl.prefect import wrapper
 
         program = load_program(path=wrapper.wrap)
-        program.flow.name = prefect_runtime.sanitize(name or pathlib.Path(path).stem)
+        program.flow.name = infractl.identity.sanitize(name or pathlib.Path(path).stem)
         super().__init__(path=program.path, flow=program.flow)
 
         program_path = pathlib.Path(path)

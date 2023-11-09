@@ -26,6 +26,7 @@ from prefect.server.api import server
 
 import infractl
 import infractl.base
+import infractl.identity
 import infractl.plugins.prefect_runtime.utils as prefect_utils
 from infractl.logging import get_logger
 from infractl.plugins import icl_infrastructure, prefect_runtime
@@ -89,16 +90,6 @@ def strip_file_scheme(uri: str) -> str:
         # workaround to remove leading slash on Windows
         return path[1:]
     return path
-
-
-def stable_identity() -> str:
-    """Generates stable identity for the current user.
-
-    Uses environment variables `JUPYTERHUB_USER`, `USER` and sanitizes the value to make it
-    compatible with Prefect names.
-    """
-    identity = os.environ.get('JUPYTERHUB_USER') or os.environ.get('USER') or 'unknown'
-    return prefect_runtime.sanitize(identity)
 
 
 def upload_files(files: List[infractl.base.RuntimeFile], target_path: pathlib.Path):
@@ -486,7 +477,7 @@ class PrefectRuntimeImplementation(
 
     async def create_files_block(self, block_name: str):
         """Creates a Prefect storage block, upload files and script for infractl.prefect.engine."""
-        identity = stable_identity()
+        identity = infractl.identity.generate()
         storage_path = self.settings('prefect_storage_basepath', 's3://prefect')
         base_path = f'{storage_path}/_files/{identity}'
         block = self.define_storage_block(base_path, f'{identity}-{block_name}-files')
