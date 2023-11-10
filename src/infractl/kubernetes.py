@@ -26,7 +26,12 @@ class KubeApi:
         self.api_client = client.ApiClient(configuration=self.configuration)
 
     def core_v1(self) -> client.CoreV1Api:
+        """Returns Kubernetes CoreV1Api client."""
         return client.CoreV1Api(api_client=self.api_client)
+
+    def batch_v1(self) -> client.BatchV1Api:
+        """Returns Kubernetes BatchV1Api client."""
+        return client.BatchV1Api(api_client=self.api_client)
 
 
 def api() -> KubeApi:

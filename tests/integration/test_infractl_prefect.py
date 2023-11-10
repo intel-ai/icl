@@ -1,5 +1,5 @@
 """
-Tests to verify that infractl Python package and ICL cluster work together.
+Tests to verify that ICL Prefect runtime and ICL cluster work together.
 
 To run the tests you need a local ICL cluster available at `localtest.me`,
 see [docs/kind.md](../../docs/kind.md) for the details.
