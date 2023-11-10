@@ -1,3 +1,5 @@
+"""ICL Kubernetes runtime implementation."""
+
 import infractl.base
 
 
@@ -7,6 +9,6 @@ class KubernetesRuntimeImplementation(
     """Kubernetes runtime implementation."""
 
     async def deploy(
-            self, program: infractl.base.program.Program, **kwargs
+        self, program: infractl.base.program.Program, **kwargs
     ) -> infractl.base.DeployedProgram:
         raise NotImplementedError()
