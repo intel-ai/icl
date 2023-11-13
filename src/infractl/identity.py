@@ -3,6 +3,7 @@
 import os
 import platform
 import re
+from typing import Optional
 
 
 def sanitize(identity: str) -> str:
@@ -18,7 +19,7 @@ def sanitize(identity: str) -> str:
     return re.sub('--+', '-', identity).strip('-')
 
 
-def generate() -> str:
+def generate(prefix: Optional[str] = None, suffix: Optional[str] = None) -> str:
     """Generates stable identity for the current user.
 
     Uses environment variables `JUPYTERHUB_USER`, `USER` and sanitizes the value to make it
@@ -27,4 +28,6 @@ def generate() -> str:
     identity = (
         os.environ.get('JUPYTERHUB_USER') or os.environ.get('USER') or platform.node() or 'unknown'
     )
-    return sanitize(identity)
+    prefix = f'{prefix}-' if prefix else ''
+    suffix = f'-{suffix}' if suffix else ''
+    return sanitize(prefix + identity + suffix)

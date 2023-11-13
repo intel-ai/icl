@@ -11,7 +11,6 @@ from prefect import filesystems
 
 import infractl
 import infractl.base
-from infractl.plugins import prefect_runtime
 from infractl.plugins.prefect_runtime import runtime
 
 RuntimeFile = infractl.base.RuntimeFile

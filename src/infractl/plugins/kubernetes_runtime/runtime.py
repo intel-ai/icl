@@ -1,10 +1,13 @@
 """ICL Kubernetes runtime implementation."""
 from typing import Union, Dict, Any, List, Optional
 
+import pathlib
+
 from kubernetes import client
 
 import infractl.base
-import infractl.kubernetes as kube
+from infractl import identity
+from infractl import kubernetes
 
 
 class KubernetesRuntimeImplementation(
@@ -16,12 +19,17 @@ class KubernetesRuntimeImplementation(
     image: str = 'python:3.9'
 
     async def deploy(
-        self, program: infractl.base.program.Program, **kwargs
+        self,
+        program: infractl.base.program.Program,
+        name: Optional[str] = None,
+        **kwargs,
     ) -> infractl.base.DeployedProgram:
         """Deploys a program."""
-        kube.api().batch_v1().create_namespaced_job(
+
+        name = name or identity.generate(suffix=pathlib.Path(program.path).stem)
+        kubernetes.api().batch_v1().create_namespaced_job(
             namespace=self.namespace,
-            body=self.get_job_manifest('test')
+            body=self.get_job_manifest(name)
         )
         return infractl.base.DeployedProgram(program=program, runner=KubernetesRunner())
 
