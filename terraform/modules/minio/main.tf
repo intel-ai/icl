@@ -75,6 +75,8 @@ resource "helm_release" "minio_ha" {
         name: minio-env-configuration
       tenant:
         name: minio
+        configuration:
+          name: minio-env-configuration
         pools:
           - name: pool-0
             servers: ${var.minio_servers}
@@ -111,6 +113,8 @@ resource "helm_release" "minio" {
         name: minio-env-configuration
       tenant:
         name: minio
+        configuration:
+          name: minio-env-configuration
         pools:
           - name: pool-0
             servers: 1
