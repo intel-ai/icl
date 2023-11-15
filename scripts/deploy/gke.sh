@@ -11,6 +11,7 @@ set -e
 : ${X1_CLUSTER_VERSION:="1.28"}
 : ${X1_EXTERNALDNS_ENABLED:="false"}
 : ${CONTROL_NODE_IMAGE:="pbchekin/ccn-gcp:0.0.2"}
+: ${ICL_GCP_MACHINE_TYPE:="e2-standard-4"}
 
 #: ${X1_GCP_REGION:="us-central1"}
 # disabled since we use monozone cluster
@@ -55,7 +56,7 @@ EOF
 }
 
 function show_parameters() {
-  for var in X1_GCP_ZONE ICL_INGRESS_DOMAIN WORKSPACE; do
+  for var in X1_GCP_ZONE ICL_INGRESS_DOMAIN WORKSPACE ICL_GCP_MACHINE_TYPE; do
     echo "$var: ${!var}"
   done
 }
@@ -63,7 +64,7 @@ function show_parameters() {
 # TODO: add cluster_version here
 function render_gcp_terraform_tfvars() {
   if [[ -v TERRAFORM_POSTGRESQL_URI  ]]; then
-    cat <<EOF >> "$WORKSPACE/terraform/gcp/terraform.tfvars"
+    cat <<EOF > "$WORKSPACE/terraform/gcp/terraform.tfvars"
     terraform {
       backend "pg" {}
     }
@@ -75,7 +76,7 @@ cluster_name = "$X1_CLUSTER_NAME"
 gcp_zone = "$X1_GCP_ZONE"
 gcp_project = "$X1_GCP_PROJECT_NAME"
 node_version = "$X1_CLUSTER_VERSION"
-
+machine_type = "$ICL_GCP_MACHINE_TYPE"
 EOF
 }
 
@@ -113,7 +114,7 @@ function check_gcp_auth()
 # Deploy cluster
 function deploy_gke() {
   check_gcp_auth
-  control_node "terraform -chdir=$WORKSPACE/terraform/gcp/ apply -input=false -auto-approve"
+  control_node "terraform -chdir=$WORKSPACE/terraform/gcp/ apply -var machine_type=${ICL_GCP_MACHINE_TYPE} -input=false -auto-approve"
 }
 
 # Delete cluster
@@ -143,6 +144,7 @@ function render_workspace() {
     }
 EOF
   fi
+
   control_node "\
     terraform -chdir=$WORKSPACE/terraform/gcp/ init -upgrade -input=false
   "
