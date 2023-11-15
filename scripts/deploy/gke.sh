@@ -115,7 +115,7 @@ function check_gcp_auth()
 # Deploy cluster
 function deploy_gke() {
   check_gcp_auth
-  control_node "terraform -chdir=$WORKSPACE/terraform/gcp/ apply -var machine_type=${ICL_GCP_MACHINE_TYPE} -input=false -auto-approve"
+  control_node "terraform -chdir=$WORKSPACE/terraform/gcp/ apply -input=false -auto-approve"
 }
 
 # Delete cluster
