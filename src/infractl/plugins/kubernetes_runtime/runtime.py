@@ -1,17 +1,16 @@
 """ICL Kubernetes runtime implementation."""
 
 from __future__ import annotations
-from typing import Union, Dict, Any, List, Optional
 
 import base64
 import pathlib
+from typing import Any, Dict, List, Optional, Union
 
-from kubernetes import client
 import s3fs
+from kubernetes import client
 
 import infractl.base
-from infractl import identity
-from infractl import kubernetes
+from infractl import identity, kubernetes
 
 KubernetesManifest = infractl.base.KubernetesManifest
 
@@ -75,9 +74,13 @@ class KubernetesRuntimeImplementation(
             f's3cmd --config=/secrets/.s3cfg get --recursive s3://{remote_path}/ .',
             'pwd',
             'ls -l',
-            f'python {program_path.name}'
+            f'python {program_path.name}',
         ]
-        job.spec.template.spec.containers[0].command = ['/bin/bash', '-xc', '\n'.join(command_lines)]
+        job.spec.template.spec.containers[0].command = [
+            '/bin/bash',
+            '-xc',
+            '\n'.join(command_lines),
+        ]
 
         kubernetes.api().batch_v1().create_namespaced_job(
             namespace=self.settings.namespace,
@@ -90,10 +93,10 @@ class KubernetesRunner(infractl.base.Runnable):
     """Kubernetes runner."""
 
     async def run(
-            self,
-            parameters: Union[Dict[str, Any], List[str], None] = None,
-            timeout: Optional[float] = None,
-            detach: bool = False,
+        self,
+        parameters: Union[Dict[str, Any], List[str], None] = None,
+        timeout: Optional[float] = None,
+        detach: bool = False,
     ) -> infractl.base.ProgramRun:
         """Runs this runnable.
 
@@ -116,7 +119,7 @@ def _get_secret(name: str, data: str) -> client.V1Secret:
         metadata=client.V1ObjectMeta(name=name),
         data={
             '.s3cfg': base64.b64encode(data.encode('utf-8')).decode('utf-8'),
-        }
+        },
     )
 
 

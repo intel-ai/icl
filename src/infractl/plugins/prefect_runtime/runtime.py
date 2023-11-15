@@ -571,8 +571,7 @@ class PrefectRuntimeImplementation(
         return infrastructure.KubernetesJob(job=manifest, **job_args)
 
     def manifest_filter(
-        self,
-        manifest: infractl.base.KubernetesManifest
+        self, manifest: infractl.base.KubernetesManifest
     ) -> infractl.base.KubernetesManifest:
         """Filters Kubernetes Job manifest.
 
