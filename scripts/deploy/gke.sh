@@ -49,6 +49,7 @@ Environment variables:
   X1_GCP_ZONE                    GCP zone to use, default is us-central1-a
   ICL_INGRESS_DOMAIN             Domain for ingress, default is test.x1infra.com
   GOOGLE_APPLICATION_CREDENTIALS Location of a Google Cloud credential JSON file.
+  ICL_GCP_MACHINE_TYPE           Machine type for GKE to use
   TF_PG_CONN_STR                 If set, PostgreSQL backend will be used to store Terraform state 
   PGUSER                         PostgreSQL username for Terraform state
   PGPASSWORD                     PostgreSQL password for Terraform state
