@@ -69,10 +69,6 @@ DEFAULT_ITEMS_TO_IGNORE = [
 ]
 
 
-ManifestFilter = Callable[[infrastructure.KubernetesManifest], infrastructure.KubernetesManifest]
-"""Accepts Kubernetes manifest as a dictionary and returns an updated manifest."""
-
-
 class PrefectRuntimeError(Exception):
     """Prefect runtime error."""
 
@@ -276,7 +272,7 @@ class PrefectRuntimeImplementation(
         self,
         program: prefect_runtime.PrefectProgram,
         customizations: Optional[List[Dict[str, Any]]] = None,
-        manifest_filter: Optional[ManifestFilter] = None,
+        manifest_filter: Optional[infractl.base.ManifestFilter] = None,
         name: Optional[str] = None,
         **kwargs,
     ):
@@ -303,7 +299,7 @@ class PrefectRuntimeImplementation(
         self,
         program: prefect_runtime.PythonProgram,
         customizations: Optional[List[Dict[str, Any]]] = None,
-        manifest_filter: Optional[ManifestFilter] = None,
+        manifest_filter: Optional[infractl.base.ManifestFilter] = None,
         name: Optional[str] = None,
         **kwargs,
     ) -> infractl.base.DeployedProgram:
@@ -334,7 +330,7 @@ class PrefectRuntimeImplementation(
         self,
         program: prefect_runtime.PrefectProgram,
         customizations: Optional[List[Dict[str, Any]]] = None,
-        manifest_filter: Optional[ManifestFilter] = None,
+        manifest_filter: Optional[infractl.base.ManifestFilter] = None,
         name: Optional[str] = None,
         **kwargs,
     ) -> infractl.base.DeployedProgram:
@@ -512,7 +508,7 @@ class PrefectRuntimeImplementation(
         self,
         block_name: str,
         customizations: Optional[List[Dict[str, Any]]] = None,
-        manifest_filter: Optional[ManifestFilter] = None,
+        manifest_filter: Optional[infractl.base.ManifestFilter] = None,
     ) -> PrefectBlock:
         """Creates Prefect infrastructure block."""
         block_name = self.sanitize_block_name(block_name)
@@ -523,7 +519,7 @@ class PrefectRuntimeImplementation(
     def kubernetes_job(
         self,
         customizations: Optional[List[Dict[str, Any]]] = None,
-        manifest_filter: Optional[ManifestFilter] = None,
+        manifest_filter: Optional[infractl.base.ManifestFilter] = None,
     ) -> infrastructure.KubernetesJob:
         """Creates Prefect KubernetesJob block."""
         job_args = {
@@ -573,8 +569,8 @@ class PrefectRuntimeImplementation(
 
     def manifest_filter(
         self,
-        manifest: infrastructure.KubernetesManifest,
-    ) -> infrastructure.KubernetesManifest:
+        manifest: infractl.base.KubernetesManifest
+    ) -> infractl.base.KubernetesManifest:
         """Filters Kubernetes Job manifest.
 
         Adds shared volume, if enabled.
