@@ -5,7 +5,7 @@ import infractl.base
 
 def default_runtime() -> infractl.base.Runtime:
     """Returns a default program runtime."""
-    return infractl.base.Runtime(kind='prefect')
+    return runtime(kind='prefect')
 
 
 def runtime(*args, kind: str = 'prefect', **kwargs) -> infractl.base.Runtime:

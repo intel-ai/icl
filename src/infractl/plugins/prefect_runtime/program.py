@@ -220,20 +220,16 @@ class PythonProgram(PrefectProgram):
         self.files = [infractl.base.RuntimeFile(src=str(program_path))]
 
 
-def load_program(
-    path: Union[str, prefect.Flow], name: Optional[str] = None, **kwargs
-) -> PrefectProgram:
+def load_program(path: Union[str, prefect.Flow], name: Optional[str] = None) -> PrefectProgram:
     """Returns Prefect program."""
     with warnings.catch_warnings():
         # Ignore UserWarning since Prefect complains about loading the same flow definition more
         # than once.
         warnings.simplefilter('ignore', category=UserWarning)
-        return _load_program(path, name=name, **kwargs)
+        return _load_program(path, name=name)
 
 
-def _load_program(
-    path: Union[str, prefect.Flow], name: Optional[str] = None, **kwargs
-) -> PrefectProgram:
+def _load_program(path: Union[str, prefect.Flow], name: Optional[str] = None) -> PrefectProgram:
     """Returns Prefect program."""
 
     flow: Optional[prefect.Flow] = None
@@ -262,4 +258,4 @@ def _load_program(
         if not path:
             raise ValueError('Could not determine flow file location (__file__ not set)')
 
-    return PrefectProgram(path=path, flow=flow, name=flow.name, **kwargs)
+    return PrefectProgram(path=path, flow=flow, name=flow.name)

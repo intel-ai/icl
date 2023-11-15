@@ -15,7 +15,7 @@ import sys
 import tarfile
 import tempfile
 import urllib.parse
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import dynaconf
 import prefect.blocks.core as blocks
@@ -270,13 +270,16 @@ class PrefectRuntimeImplementation(
 
     async def deploy(
         self,
-        program: prefect_runtime.PrefectProgram,
+        program: infractl.base.Program,
         customizations: Optional[List[Dict[str, Any]]] = None,
         manifest_filter: Optional[infractl.base.ManifestFilter] = None,
         name: Optional[str] = None,
         **kwargs,
     ):
         """Deploys a program."""
+
+        program = prefect_runtime.load_program(path=program.path, name=program.name)
+
         with settings.temporary_settings(updates={settings.PREFECT_API_URL: self.prefect_api_url}):
             if isinstance(program, prefect_runtime.PythonProgram):
                 return await self.deploy_python_program(
