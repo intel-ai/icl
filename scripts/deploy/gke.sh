@@ -145,7 +145,6 @@ function render_workspace() {
     }
 EOF
   fi
-
   control_node "\
     terraform -chdir=$WORKSPACE/terraform/gcp/ init -upgrade -input=false
   "
