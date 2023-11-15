@@ -33,6 +33,34 @@ class KubeApi:
         """Returns Kubernetes BatchV1Api client."""
         return client.BatchV1Api(api_client=self.api_client)
 
+    def recreate_secret(self, namespace: str, body: client.V1Secret) -> client.V1Secret:
+        """Recreates Kubernetes secret."""
+        name = body.metadata.name
+        try:
+            self.core_v1().delete_namespaced_secret(name, namespace)
+        except client.exceptions.ApiException as error:
+            if error.status != 404:
+                raise error
+        return self.core_v1().create_namespaced_secret(namespace, body=body)
+
+    def recreate_job(self, namespace: str, body: client.V1Job) -> client.V1Job:
+        """Recreates Kubernetes job."""
+        name = body.metadata.name
+        # retry deleting the job to avoid HTTP 409 Conflict, object is being deleted
+        for retries_left in reversed(range(5)):
+            try:
+                self.batch_v1().delete_namespaced_job(
+                    name,
+                    namespace,
+                    propagation_policy='Foreground',
+                )
+            except client.exceptions.ApiException as error:
+                if error.status == 404:
+                    break
+                elif retries_left == 0:
+                    raise error
+        return self.batch_v1().create_namespaced_job(namespace, body=body)
+
 
 def api() -> KubeApi:
     """Returns default KubeApi object."""

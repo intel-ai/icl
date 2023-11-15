@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import base64
 import pathlib
+import random
+import string
 from typing import Any, Dict, List, Optional, Union
 
 import s3fs
-from kubernetes import client
+from kubernetes import client, watch
 
 import infractl.base
 from infractl import identity, kubernetes
@@ -40,7 +42,8 @@ class KubernetesRuntimeImplementation(
         """Deploys a program."""
 
         program_path = pathlib.Path(program.path)
-        name = name or identity.generate(suffix=program_path.stem)
+        random_part = ''.join(random.choices(string.ascii_letters + string.digits, k=5))
+        name = name or identity.generate(suffix=f'{program_path.stem}-{random_part}')
         remote_path = f'{self.settings.s3_base_path}/{name}'
 
         fs_spec = {
@@ -55,10 +58,7 @@ class KubernetesRuntimeImplementation(
         remote_fs.put(str(program_path), f'{remote_path}/')
 
         secret = _get_secret(name, _get_s3cmd_config())
-        kubernetes.api().core_v1().create_namespaced_secret(
-            namespace=self.settings.namespace,
-            body=secret,
-        )
+        kubernetes.api().recreate_secret(namespace=self.settings.namespace, body=secret)
 
         job = _get_job(name)
         job.spec.template.spec.containers[0].image = self.settings.image
@@ -81,16 +81,24 @@ class KubernetesRuntimeImplementation(
             '-xc',
             '\n'.join(command_lines),
         ]
+        # TODO: use activeDeadlineSeconds for the timeout
 
-        kubernetes.api().batch_v1().create_namespaced_job(
-            namespace=self.settings.namespace,
-            body=job,
+        kubernetes.api().recreate_job(namespace=self.settings.namespace, body=job)
+        return infractl.base.DeployedProgram(
+            program=program,
+            runner=KubernetesRunner(name, self.settings.namespace),
         )
-        return infractl.base.DeployedProgram(program=program, runner=KubernetesRunner())
 
 
 class KubernetesRunner(infractl.base.Runnable):
     """Kubernetes runner."""
+
+    name: str
+    namespace: str
+
+    def __init__(self, name: str, namespace: str):
+        self.name = name
+        self.namespace = namespace
 
     async def run(
         self,
@@ -108,6 +116,64 @@ class KubernetesRunner(infractl.base.Runnable):
             detach: `False` (default) to wait for a program completion, `True` to start the program
                 and detach from it.
         """
+        for event in watch.Watch().stream(
+            func=kubernetes.api().core_v1().list_namespaced_pod,
+            namespace=self.namespace,
+            timeout_seconds=10,
+            label_selector=f'job-name={self.name}',
+        ):
+            if event['object'].status.phase == 'Succeeded':
+                return KubernetesProgramRun(completed=True)
+            elif event['object'].status.phase == 'Failed':
+                return KubernetesProgramRun(completed=False)
+            elif event['object'].status.phase == 'Running':
+                continue
+            # deleted while watching for it
+            if event['type'] == 'DELETED':
+                return KubernetesProgramRun(completed=False, message='Cancelled')
+
+
+class KubernetesProgramRun(infractl.base.ProgramRun):
+    """Kubernetes program run."""
+
+    completed: bool
+    message: Optional[str]
+
+    def __init__(self, completed: bool = True, message: Optional[str] = None):
+        self.completed = completed
+        self.message = message
+
+    def is_scheduled(self) -> bool:
+        return True
+
+    def is_pending(self) -> bool:
+        return False
+
+    def is_running(self) -> bool:
+        return False
+
+    def is_completed(self) -> bool:
+        return self.completed
+
+    def is_failed(self) -> bool:
+        return not self.completed
+
+    def is_crashed(self) -> bool:
+        return False
+
+    def is_cancelling(self) -> bool:
+        return False
+
+    def is_cancelled(self) -> bool:
+        return False
+
+    def is_final(self) -> bool:
+        return True
+
+    def is_paused(self) -> bool:
+        return False
+
+    async def wait(self, poll_interval=5) -> None:
         raise NotImplementedError()
 
 
