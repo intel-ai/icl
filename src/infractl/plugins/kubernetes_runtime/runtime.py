@@ -21,7 +21,7 @@ class KubernetesRuntimeSettings:
     """Kubernetes runtime settings."""
 
     namespace: str = 'default'
-    image: str = 'python:3.9'
+    image: str = 'python:3.9-slim'
     s3_base_path: str = 'prefect/infractl/kubernetes'
     working_dir = '/root'
 
@@ -119,7 +119,7 @@ class KubernetesRunner(infractl.base.Runnable):
         for event in watch.Watch().stream(
             func=kubernetes.api().core_v1().list_namespaced_pod,
             namespace=self.namespace,
-            timeout_seconds=10,
+            timeout_seconds=timeout,
             label_selector=f'job-name={self.name}',
         ):
             if event['object'].status.phase == 'Succeeded':
@@ -131,6 +131,8 @@ class KubernetesRunner(infractl.base.Runnable):
             # deleted while watching for it
             if event['type'] == 'DELETED':
                 return KubernetesProgramRun(completed=False, message='Cancelled')
+        # TODO: stop job if it is still running
+        return KubernetesProgramRun(completed=False, message='Timed out')
 
 
 class KubernetesProgramRun(infractl.base.ProgramRun):
