@@ -274,9 +274,10 @@ async def test_flow_with_customizations(address):
 
 
 @pytest.mark.asyncio
-async def test_python_program(address):
+@pytest.mark.parametrize('runtime_kind', ['prefect', 'kubernetes'])
+async def test_python_program(address, runtime_kind):
     infrastructure = infractl.infrastructure(address=address)
-    runtime = infractl.runtime()
+    runtime = infractl.runtime(kind=runtime_kind)
     program_run = await infractl.run(
         infractl.program('flows/program1.py'), runtime=runtime, infrastructure=infrastructure
     )
