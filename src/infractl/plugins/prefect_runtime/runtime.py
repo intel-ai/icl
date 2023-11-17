@@ -11,9 +11,7 @@ import copy
 import functools
 import os
 import pathlib
-import sys
 import tempfile
-import urllib.parse
 from typing import Any, Dict, List, Optional, Union
 
 import dynaconf

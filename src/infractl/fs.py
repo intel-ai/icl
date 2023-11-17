@@ -1,8 +1,8 @@
 """File system functions."""
 
 import pathlib
-import tarfile
 import sys
+import tarfile
 import urllib.parse
 from typing import List
 
@@ -42,5 +42,3 @@ def prepare_to_upload(files: List[infractl.base.RuntimeFile], target_path: pathl
             else:
                 dst = file.dst or file.src
                 cwd.add(name=file.src, arcname=pathlib.Path(dst).name)
-
-

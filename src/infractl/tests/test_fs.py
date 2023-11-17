@@ -86,5 +86,5 @@ def test_prepare_to_upload(tmp_path: pathlib.Path, set_cwd):
     assert (runtime_path / 'dir2.renamed' / 'subdir1').is_dir()
     assert (runtime_path / 'dir2.renamed' / 'subdir2').is_dir()
     assert (
-                   runtime_path / 'dir2.renamed' / 'subdir1' / 'subdir1_file1'
-           ).read_text() == 'subdir1_file1'
+        runtime_path / 'dir2.renamed' / 'subdir1' / 'subdir1_file1'
+    ).read_text() == 'subdir1_file1'
