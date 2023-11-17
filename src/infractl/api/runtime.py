@@ -21,4 +21,3 @@ def runtime(*args, kind: str = 'prefect', **kwargs) -> infractl.base.Runtime:
     else:
         raise NotImplementedError(f'Runtime {kind} is not implemented')
     return infractl.base.Runtime(*args, kind=kind, **kwargs)
-
