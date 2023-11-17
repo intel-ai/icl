@@ -306,6 +306,7 @@ async def test_python_function(address, runtime_kind):
     runtime = infractl.runtime(
         kind=runtime_kind,
         dependencies={'pip': ['toml']},
+        environment={'PROGRAM1_ENV_VAR': 'SET'},
     )
     program_run = await infractl.run(
         infractl.program('flows/program1.py', name='all_checks'),

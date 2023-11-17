@@ -118,6 +118,13 @@ class KubernetesRuntimeImplementation(
             '-xc',
             '\n'.join(command_lines),
         ]
+
+        if self.runtime.environment:
+            job.spec.template.spec.containers[0].env = [
+                client.V1EnvVar(name=key, value=value)
+                for key, value in self.runtime.environment.items()
+            ]
+
         # TODO: use activeDeadlineSeconds for the timeout
 
         kubernetes.api().recreate_job(namespace=self.settings.namespace, body=job)

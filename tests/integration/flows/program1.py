@@ -1,3 +1,4 @@
+import os
 import sys
 
 print('import')
@@ -16,6 +17,8 @@ def check_dependency():
 
 def check_environment():
     """Checks if environment variable is set."""
+    if not os.getenv('PROGRAM1_ENV_VAR'):
+        raise AssertionError('Environment variable PROGRAM1_ENV_VAR not set')
 
 
 def all_checks():
