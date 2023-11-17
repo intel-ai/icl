@@ -74,6 +74,14 @@ class KubernetesRuntimeImplementation(
         # upload engine
         remote_fs.put(lpath=engine.__file__, rpath=f'{data_path}/')
 
+        # upload dependencies
+        if self.runtime.dependencies.pip:
+            with tempfile.NamedTemporaryFile(delete=False) as requirements_file:
+                requirements_file.write('\n'.join(self.runtime.dependencies.pip).encode('utf-8'))
+                requirements_file.flush()
+                requirements_file.close()
+                remote_fs.put(lpath=requirements_file.name, rpath=f'{data_path}/requirements.txt')
+
         secret = _get_secret(name, _get_s3cmd_config())
         kubernetes.api().recreate_secret(namespace=self.settings.namespace, body=secret)
 
@@ -92,10 +100,13 @@ class KubernetesRuntimeImplementation(
         if program.name:
             engine_cmd += f' --entrypoint {program.name}'
         command_lines = [
-            'pip install s3cmd',
-            f'{s3cmd_get} s3://{code_path}/ .',
             '__ICL_DATA_DIR=$(mktemp -d)',
+            'pip install s3cmd pydantic',
+            f'{s3cmd_get} s3://{code_path}/ .',
             f'{s3cmd_get} s3://{data_path}/ $__ICL_DATA_DIR/',
+            'if [[ -f "$__ICL_DATA_DIR/requirements.txt" ]]; then',
+            '  pip install -r "$__ICL_DATA_DIR/requirements.txt"',
+            'fi',
             'if [[ -f "$__ICL_DATA_DIR/cwd.tar" ]]; then tar xvf "$__ICL_DATA_DIR/cwd.tar"; fi',
             'pwd',
             'ls -l . $__ICL_DATA_DIR',
