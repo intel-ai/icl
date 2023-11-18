@@ -10,7 +10,6 @@ import tempfile
 from typing import Any, Dict, List, Optional, Union
 
 import fsspec
-import pydantic
 import s3fs
 from kubernetes import client, watch
 

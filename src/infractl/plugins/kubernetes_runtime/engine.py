@@ -5,8 +5,8 @@ deserialization of program or function parameters and the result.
 """
 
 import argparse
-import json
 import importlib
+import json
 import pathlib
 import runpy
 import sys
@@ -47,9 +47,7 @@ def object_encoder(obj: Any) -> Any:
 def object_decoder(obj: dict) -> Any:
     """Decodes object from JSON."""
     if '__class__' in obj:
-        return pydantic.parse_obj_as(
-            from_full_name(obj['__class__']), obj['data']
-        )
+        return pydantic.parse_obj_as(from_full_name(obj['__class__']), obj['data'])
     elif '__exc_type__' in obj:
         return from_full_name(obj['__exc_type__'])(obj['message'])
     else:

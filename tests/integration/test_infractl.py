@@ -327,7 +327,7 @@ async def test_python_function_with_parameters(address, runtime_kind):
         runtime=runtime,
         infrastructure=infrastructure,
         name='function-with-parameters',
-        parameters={'arg1': 'val1'}
+        parameters={'arg1': 'val1'},
     )
     assert program_run.is_completed()
 
