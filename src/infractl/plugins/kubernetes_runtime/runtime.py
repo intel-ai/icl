@@ -15,7 +15,7 @@ from kubernetes import client, watch
 
 import infractl.base
 import infractl.fs
-from infractl import identity, kubernetes
+from infractl import defaults, identity, kubernetes
 from infractl.plugins.kubernetes_runtime import engine
 
 KubernetesManifest = infractl.base.KubernetesManifest
@@ -25,9 +25,15 @@ class KubernetesRuntimeSettings:
     """Kubernetes runtime settings."""
 
     namespace: str = 'default'
-    image: str = 'python:3.9-slim'
+
+    image: str = defaults.PREFECT_IMAGE
+
     s3_base_path: str = 'prefect/infractl/kubernetes'
+
     working_dir = '/root'
+
+    dependencies = ['s3cmd', 'pydantic']
+    """Required dependencies to install before downloading program."""
 
 
 class RemoteStorage:
@@ -113,7 +119,12 @@ class KubernetesRuntimeImplementation(
         engine_cmd = f'python $__ICL_DATA_DIR/engine.py {program_path.name}'
         if program.name:
             engine_cmd += f' --entrypoint {program.name}'
-        command_lines = [
+
+        command_lines = []
+        if self.settings.dependencies:
+            command_lines = [f'pip install {" ".join(self.settings.dependencies)}']
+
+        command_lines += [
             '__ICL_DATA_DIR=$(mktemp -d)',
             'pip install s3cmd pydantic',
             f'{s3cmd_get} s3://{code_path}/ .',
