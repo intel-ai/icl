@@ -259,7 +259,6 @@ if [[ " $1 " =~ " --console " ]]; then
   else
     warn_about_proxy_and_variables
   fi
-  
   control_node "$cmd"
   exit $?
 fi
