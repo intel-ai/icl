@@ -1,5 +1,5 @@
 """
-Tests to verify that infractl Python package and ICL cluster work together.
+Tests to verify that ICL Prefect runtime and ICL cluster work together.
 
 To run the tests you need a local ICL cluster available at `localtest.me`,
 see [docs/kind.md](../../docs/kind.md) for the details.
@@ -21,9 +21,10 @@ import infractl
 
 
 @pytest.mark.asyncio
-async def test_flow_with_file_name(address):
+@pytest.mark.parametrize('runtime_kind', ['prefect', 'kubernetes'])
+async def test_flow_with_file_name(address, runtime_kind):
     infrastructure = infractl.infrastructure(address=address)
-    runtime = infractl.runtime()
+    runtime = infractl.runtime(kind=runtime_kind)
     program_run = await infractl.run(
         infractl.program('flows/flow1.py'), runtime=runtime, infrastructure=infrastructure
     )
@@ -42,31 +43,6 @@ async def test_flow_with_imported_module(address):
     )
     program_run = await program.run()
     assert program_run.is_completed()
-
-
-@pytest.mark.asyncio
-async def test_flow_without___file__(address):
-    infrastructure = infractl.infrastructure(address=address)
-    runtime = infractl.runtime()
-
-    # assumed prefect logic (if no entrypoint passed)
-    # flow_file = getattr(flow, "__globals__", {}).get("__file__")
-    # mod_name = getattr(flow, "__module__", None)
-    # if not flow_file:
-    #    if not mod_name:
-    #        raise ValueError
-    #    try:
-    #        module = importlib.import_module(mod_name)
-    #        flow_file = getattr(module, "__file__", None)
-    # ------------------------------------------------------
-    # To be sure that changing the prefect won't break infractl, we can test if
-    # `deploy` works without `__module__` (and therefore without `__file__`).
-    # Note: `__globals__` is also not defined by default for `prefect.Flow` object.
-    program = infractl.program(flow2)
-    with patch.object(program.flow, "__module__", new=None):
-        program = await infractl.deploy(program, runtime=runtime, infrastructure=infrastructure)
-        program_run = await program.run()
-        assert program_run.is_completed()
 
 
 @pytest.mark.asyncio
@@ -89,13 +65,15 @@ async def test_flow_with_parameters(address, flow_name):
 
 
 @pytest.mark.asyncio
-async def test_failing_flow(address):
+@pytest.mark.parametrize('runtime_kind', ['prefect', 'kubernetes'])
+async def test_failing_flow(address, runtime_kind):
     infrastructure = infractl.infrastructure(address=address)
-    program = await infractl.deploy(
+    runtime = infractl.runtime(kind=runtime_kind)
+    program_run = await infractl.run(
         infractl.program('flows/flow6.py'),
+        runtime=runtime,
         infrastructure=infrastructure,
     )
-    program_run = await program.run()
     assert program_run.is_failed()
 
 
@@ -241,23 +219,26 @@ async def test_stream_logs_from_program_run(address):
 
 
 @pytest.mark.asyncio
-async def test_flow_with_dependencies(address):
+@pytest.mark.parametrize('runtime_kind', ['prefect', 'kubernetes'])
+async def test_flow_with_dependencies(address, runtime_kind):
     infrastructure = infractl.infrastructure(address=address)
     runtime = infractl.runtime(
+        kind=runtime_kind,
         environment={'foo': 'bar'},
         dependencies={'pip': ['prefect-vault']},
     )
-    program = await infractl.deploy(
+    program_run = await infractl.run(
         infractl.program('flows/flow4.py'), runtime=runtime, infrastructure=infrastructure
     )
-    program_run = await program.run()
     assert program_run.is_completed()
 
 
 @pytest.mark.asyncio
-async def test_flow_with_files(address):
+@pytest.mark.parametrize('runtime_kind', ['prefect', 'kubernetes'])
+async def test_flow_with_files(address, runtime_kind):
     infrastructure = infractl.infrastructure(address=address)
     runtime = infractl.runtime(
+        kind=runtime_kind,
         files=[
             # file from local current directory to runtime working directory
             'data/test_file.txt',
@@ -267,10 +248,9 @@ async def test_flow_with_files(address):
             {'src': 'data/', 'dst': 'new_data/'},
         ],
     )
-    program = await infractl.deploy(
+    program_run = await infractl.run(
         infractl.program('flows/flow5.py'), runtime=runtime, infrastructure=infrastructure
     )
-    program_run = await program.run()
     assert program_run.is_completed()
 
 
@@ -299,9 +279,10 @@ async def test_flow_with_customizations(address):
 
 
 @pytest.mark.asyncio
-async def test_python_program(address):
+@pytest.mark.parametrize('runtime_kind', ['prefect', 'kubernetes'])
+async def test_python_program(address, runtime_kind):
     infrastructure = infractl.infrastructure(address=address)
-    runtime = infractl.runtime()
+    runtime = infractl.runtime(kind=runtime_kind)
     program_run = await infractl.run(
         infractl.program('flows/program1.py'), runtime=runtime, infrastructure=infrastructure
     )
@@ -309,9 +290,10 @@ async def test_python_program(address):
 
 
 @pytest.mark.asyncio
-async def test_python_program_with_parameters(address):
+@pytest.mark.parametrize('runtime_kind', ['prefect', 'kubernetes'])
+async def test_python_program_with_parameters(address, runtime_kind):
     infrastructure = infractl.infrastructure(address=address)
-    runtime = infractl.runtime()
+    runtime = infractl.runtime(kind=runtime_kind)
     program_run = await infractl.run(
         infractl.program('flows/program1.py'),
         runtime=runtime,
@@ -323,28 +305,54 @@ async def test_python_program_with_parameters(address):
 
 
 @pytest.mark.asyncio
-async def test_python_function(address):
+@pytest.mark.parametrize('runtime_kind', ['prefect', 'kubernetes'])
+async def test_python_function(address, runtime_kind):
     infrastructure = infractl.infrastructure(address=address)
-    runtime = infractl.runtime()
-    program = await infractl.deploy(
-        infractl.program('flows/program1.py', name='foo'),
+    runtime = infractl.runtime(
+        kind=runtime_kind,
+        dependencies={'pip': ['toml']},
+        environment={'PROGRAM1_ENV_VAR': 'SET'},
+    )
+    program_run = await infractl.run(
+        infractl.program('flows/program1.py', name='all_checks'),
         runtime=runtime,
         infrastructure=infrastructure,
         name='program-with-entrypoint',
     )
-    program_run = await program.run()
     assert program_run.is_completed()
 
 
 @pytest.mark.asyncio
-async def test_python_function_with_parameters(address):
+@pytest.mark.parametrize('runtime_kind', ['prefect', 'kubernetes'])
+async def test_python_function_with_parameters(address, runtime_kind):
     infrastructure = infractl.infrastructure(address=address)
-    runtime = infractl.runtime()
-    program = await infractl.deploy(
+    runtime = infractl.runtime(kind=runtime_kind)
+    program_run = await infractl.run(
         infractl.program('flows/program1.py', name='foo'),
         runtime=runtime,
         infrastructure=infrastructure,
         name='function-with-parameters',
+        parameters={'arg1': 'val1'},
     )
-    program_run = await program.run(parameters={'arg1': 'val1'})
+    assert program_run.is_completed()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('runtime_kind', ['prefect', 'kubernetes'])
+async def test_python_program_with_files(address, runtime_kind):
+    infrastructure = infractl.infrastructure(address=address)
+    runtime = infractl.runtime(
+        kind=runtime_kind,
+        files=[
+            # file from local current directory to runtime working directory
+            'data/test_file.txt',
+            # file from local current directory to runtime working directory with different name
+            {'src': 'data/test_file.txt', 'dst': 'test_file.txt.renamed'},
+            # 'data/' from local current directory to 'new_data/' in runtime working directory
+            {'src': 'data/', 'dst': 'new_data/'},
+        ],
+    )
+    program_run = await infractl.run(
+        infractl.program('flows/program2.py'), runtime=runtime, infrastructure=infrastructure
+    )
     assert program_run.is_completed()
