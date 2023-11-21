@@ -24,7 +24,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: intel-sandbox/x1-cluster-profiles
-          ref: kubespray-2.23.1
           path: x1-cluster-profiles
           token: ${{ secrets.X1_GITHUB_TOKEN }}
 
