@@ -32,9 +32,9 @@ function warn_about_proxy_and_variables()
 
     if [[ $proxy_variables_used -eq 1 ]]; then
       warn "HTTP proxy variables are used, but no transparent proxy started. Consider using --start-proxy."
-      warn "Otherwise, some software in this session won't detect proxy settings and may not work."
+      warn "Otherwise, some software in this session may not detect proxy settings and may not work."
     fi
-    
+
   fi
 }
 
