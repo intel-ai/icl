@@ -257,6 +257,7 @@ if [[ " $1 " =~ " --console " ]]; then
   if [[ -n "$_rest_args" ]]; then
     cmd="$_rest_args"
   fi
+  warn_about_proxy_and_variables
   control_node "$cmd"
   exit $?
 fi
