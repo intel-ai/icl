@@ -87,7 +87,6 @@ function control_node() {
     docker_cmd+=( --tty )
   fi
 
-  proxy_variables_used=0
   proxy_status="$(proxy_container_status)"
   if [[ $proxy_status == "running" ]]; then
     docker_cmd+=( --network "container:icl-proxy" )
@@ -98,23 +97,15 @@ function control_node() {
 
     # Only set {http,https,no}_proxy when a sidecar proxy container is not used.
     if [[ -v http_proxy ]]; then
-      proxy_variables_used=1
       docker_cmd+=( --env http_proxy )
     fi
 
     if [[ -v https_proxy ]]; then
-      proxy_variables_used=1
       docker_cmd+=( --env https_proxy )
     fi
 
     if [[ -v no_proxy ]]; then
-      proxy_variables_used=1
       docker_cmd+=( --env no_proxy )
-    fi
-
-    if [[ $proxy_variables_used -eq 1 ]]; then
-      warn "HTTP proxy variables are used, but no transparent proxy started. Consider using --with-proxy."
-      warn "Otherwise, some software in this session won't detect proxy settings and may not work."
     fi
 
     # TODO: kind requires host network, aws/gcp does not
