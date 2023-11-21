@@ -48,8 +48,7 @@ def _load(program: base.Program) -> Program:
         program.path,
         submodule_search_locations=[parent_path, current_path],
     )
-    module = importlib.util.module_from_spec(spec)\
-
+    module = importlib.util.module_from_spec(spec)
     sys.modules['__infractl_loader__'] = module
     sys.path.insert(0, current_path)
     sys.path.insert(0, parent_path)

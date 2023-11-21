@@ -1,7 +1,6 @@
 from prefect import flow, get_run_logger
 
 
-
 @flow
 def prefect_test_flow():
     """Test flow"""
