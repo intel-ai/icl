@@ -91,7 +91,7 @@ class KubernetesRuntimeImplementation(
 
         program_path = pathlib.Path(program.path)
         random_part = ''.join(random.choices(string.ascii_letters + string.digits, k=5))
-        name = name or identity.generate(suffix=f'{program_path.stem}-{random_part}')
+        name = identity.sanitize(name) or identity.generate(suffix=f'{program_path.stem}-{random_part}')
 
         base_path = f'{self.settings.s3_base_path}/{name}'
         remote_fs = s3fs.S3FileSystem(**self.settings.remote_fs_spec)
