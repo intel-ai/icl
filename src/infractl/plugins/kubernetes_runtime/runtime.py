@@ -265,17 +265,6 @@ class KubernetesRunner(infractl.base.Runnable):
             await program_run.wait()
         return program_run
 
-    def result(self) -> Any:
-        """Returns program result."""
-        result_remote_path = f'{self.data_path}/result.json'
-        if not self.storage.fs.exists(result_remote_path):
-            return None
-        with tempfile.TemporaryDirectory() as dirname:
-            result_path = pathlib.Path(dirname) / 'results.json'
-            self.storage.fs.get(rpath=result_remote_path, lpath=str(result_path))
-            with result_path.open('rb') as result_file:
-                return engine.loads(result_file.read())
-
 
 class KubernetesProgramRun(infractl.base.ProgramRun):
     """Kubernetes program run."""
@@ -341,7 +330,15 @@ class KubernetesProgramRun(infractl.base.ProgramRun):
         # TODO: timed out, stop job if it is still running
 
     async def result(self) -> Any:
-        return self.runner.result()
+        """Returns program result."""
+        result_remote_path = f'{self.runner.data_path}/result.json'
+        if not self.runner.storage.fs.exists(result_remote_path):
+            return None
+        with tempfile.TemporaryDirectory() as dirname:
+            result_path = pathlib.Path(dirname) / 'results.json'
+            self.runner.storage.fs.get(rpath=result_remote_path, lpath=str(result_path))
+            with result_path.open('rb') as result_file:
+                return engine.loads(result_file.read())
 
     def __repr__(self) -> str:
         """Returns a string representation.
