@@ -260,27 +260,10 @@ class KubernetesRunner(infractl.base.Runnable):
         kubernetes.api().recreate_job(namespace=self.namespace, body=self.manifest)
         self.state = ProgramState.SCHEDULED
 
-        for event in watch.Watch().stream(
-            func=kubernetes.api().core_v1().list_namespaced_pod,
-            namespace=self.namespace,
-            timeout_seconds=timeout,
-            label_selector=f'job-name={self.name}',
-        ):
-            if event['object'].status.phase == 'Succeeded':
-                self.state = ProgramState.COMPLETED
-                return KubernetesProgramRun(self)
-            elif event['object'].status.phase == 'Failed':
-                self.state = ProgramState.FAILED
-                return KubernetesProgramRun(self)
-            elif event['object'].status.phase == 'Running':
-                self.state = ProgramState.RUNNING
-            # deleted while watching for it
-            if event['type'] == 'DELETED':
-                self.state = ProgramState.FAILED
-                return KubernetesProgramRun(self)
-
-        # timed out
-        # TODO: timed out, stop job if it is still running
+        program_run = KubernetesProgramRun(self, timeout=timeout)
+        if not detach:
+            await program_run.wait()
+        return program_run
 
     def result(self) -> Any:
         """Returns program result."""
@@ -298,9 +281,11 @@ class KubernetesProgramRun(infractl.base.ProgramRun):
     """Kubernetes program run."""
 
     runner: KubernetesRunner
+    timeout: Optional[float] = None
 
-    def __init__(self, runner: KubernetesRunner):
+    def __init__(self, runner: KubernetesRunner, timeout: Optional[float] = None):
         self.runner = runner
+        self.timeout = timeout
 
     def is_scheduled(self) -> bool:
         return self.runner.state == ProgramState.SCHEDULED
@@ -333,7 +318,27 @@ class KubernetesProgramRun(infractl.base.ProgramRun):
         return False
 
     async def wait(self, poll_interval=5) -> None:
-        raise NotImplementedError()
+        for event in watch.Watch().stream(
+            func=kubernetes.api().core_v1().list_namespaced_pod,
+            namespace=self.runner.namespace,
+            timeout_seconds=3600,
+            label_selector=f'job-name={self.runner.name}',
+        ):
+            if event['object'].status.phase == 'Succeeded':
+                self.runner.state = ProgramState.COMPLETED
+                return
+            elif event['object'].status.phase == 'Failed':
+                self.runner.state = ProgramState.FAILED
+                return
+            elif event['object'].status.phase == 'Running':
+                self.runner.state = ProgramState.RUNNING
+            # deleted while watching for it
+            if event['type'] == 'DELETED':
+                self.runner.state = ProgramState.FAILED
+                return
+
+        # timed out
+        # TODO: timed out, stop job if it is still running
 
     async def result(self) -> Any:
         return self.runner.result()

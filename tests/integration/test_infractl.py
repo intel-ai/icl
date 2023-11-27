@@ -141,12 +141,13 @@ async def test_flow_async(address):
 
 
 @pytest.mark.asyncio
-async def test_flow_async_and_wait(address):
-    infrastructure = infractl.infrastructure(address=address)
+@pytest.mark.parametrize('runtime_kind', ['prefect', 'kubernetes'])
+async def test_flow_async_and_wait(address, runtime_kind):
     program = await infractl.deploy(
         infractl.program('flows/flow3.py', name='flow3'),
         name='flow3-async-and-wait',
-        infrastructure=infrastructure,
+        runtime=infractl.runtime(kind=runtime_kind),
+        infrastructure=infractl.infrastructure(address=address),
     )
     program_run = await program.run(detach=True)
     assert program_run.is_scheduled()

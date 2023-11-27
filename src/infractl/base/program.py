@@ -47,7 +47,7 @@ class ProgramRun:
 
     @abc.abstractmethod
     def is_final(self) -> bool:
-        """Returns True if the program status id final."""
+        """Returns True if the program status is final (completed, cancelled, failed, crashed)."""
 
     @abc.abstractmethod
     def is_paused(self) -> bool:
