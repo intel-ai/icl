@@ -224,6 +224,8 @@ async def test_stream_logs_from_program_run(address, runtime_kind):
         # should be only once
         assert pos == -1
 
+    assert program_run.is_completed()
+
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize('runtime_kind', ['prefect', 'kubernetes'])

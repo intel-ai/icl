@@ -401,6 +401,7 @@ class KubernetesProgramRun(infractl.base.ProgramRun):
             container='program',
         ):
             print(line, file=file)
+        await self.wait()
 
     def __repr__(self) -> str:
         """Returns a string representation.
