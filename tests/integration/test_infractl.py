@@ -178,12 +178,13 @@ async def test_flow_with_schedule(address):
 
 
 @pytest.mark.asyncio
-async def test_get_logs_from_program_run(address):
-    infrastructure = infractl.infrastructure(address=address)
+@pytest.mark.parametrize('runtime_kind', ['prefect', 'kubernetes'])
+async def test_get_logs_from_program_run(address, runtime_kind):
     program = await infractl.deploy(
         infractl.program('flows/flow1.py'),
         name='flow1-test-get-logs',
-        infrastructure=infrastructure,
+        runtime=infractl.runtime(kind=runtime_kind),
+        infrastructure=infractl.infrastructure(address=address),
     )
     program_run = await program.run()
     assert program_run.is_completed()

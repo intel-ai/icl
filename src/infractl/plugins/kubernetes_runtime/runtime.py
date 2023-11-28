@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 import enum
+import functools
 import pathlib
 import random
 import string
@@ -21,6 +22,10 @@ from infractl.plugins.kubernetes_runtime import engine
 from infractl.plugins.kubernetes_runtime.program import load
 
 KubernetesManifest = infractl.base.KubernetesManifest
+
+
+class KubernetesRuntimeError(Exception):
+    """Kubernetes runtime error."""
 
 
 class KubernetesRuntimeSettings:
@@ -306,6 +311,23 @@ class KubernetesProgramRun(infractl.base.ProgramRun):
     def is_paused(self) -> bool:
         return False
 
+    @functools.cached_property
+    def pod_name(self) -> str:
+        """Returns program pod name"""
+        pod_list: client.V1PodList = (
+            kubernetes.api()
+            .core_v1()
+            .list_namespaced_pod(
+                namespace=self.runner.namespace,
+                label_selector=f'job-name={self.runner.name}',
+            )
+        )
+        if len(pod_list.items) > 1:
+            raise KubernetesRuntimeError(f'Multiple pods for job {self.runner.name}')
+        if len(pod_list.items) < 1:
+            raise KubernetesRuntimeError(f'Pod not found for job {self.runner.name}')
+        return pod_list.items[0].metadata.name
+
     async def wait(self, poll_interval=5) -> None:
         for event in watch.Watch().stream(
             func=kubernetes.api().core_v1().list_namespaced_pod,
@@ -339,6 +361,19 @@ class KubernetesProgramRun(infractl.base.ProgramRun):
             self.runner.storage.fs.get(rpath=result_remote_path, lpath=str(result_path))
             with result_path.open('rb') as result_file:
                 return engine.loads(result_file.read())
+
+    async def logs(self) -> List[str]:
+        """Returns program logs."""
+        return (
+            kubernetes.api()
+            .core_v1()
+            .read_namespaced_pod_log(
+                name=self.pod_name,
+                namespace=self.runner.namespace,
+                container='program',
+            )
+            .splitlines()
+        )
 
     def __repr__(self) -> str:
         """Returns a string representation.
