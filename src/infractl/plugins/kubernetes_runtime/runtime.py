@@ -1,4 +1,11 @@
-"""ICL Kubernetes runtime implementation."""
+"""ICL Kubernetes runtime implementation.
+
+TODO:
+* deployment timeout
+* run timeout
+* streaming logs
+* cancel (required for integration test)
+"""
 
 from __future__ import annotations
 
