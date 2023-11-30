@@ -1,9 +1,8 @@
-import requests
 import time
 
-from kubernetes import client, config, stream
-
 import pytest
+import requests
+from kubernetes import client, config, stream
 
 
 def pytest_addoption(parser):
@@ -80,7 +79,7 @@ def jupyterhub_session_pod_name(jupyterhub_namespace, address):
             jupyterhub_api_url + f'/users/{username}/server',
             headers={'Authorization': f'token {jupyterhub_token}'},
             json={'name': username},
-            )
+        )
         try:
             response_json = r.json()
             # Wait for "session is already started" code

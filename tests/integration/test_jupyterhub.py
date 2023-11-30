@@ -3,7 +3,6 @@ import time
 import requests
 from kubernetes import client, config, stream
 
-
 IPYNB_TEST_FILE_PATH = "data/test_notebook.ipynb"
 
 
