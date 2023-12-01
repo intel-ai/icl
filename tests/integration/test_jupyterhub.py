@@ -6,13 +6,13 @@ from kubernetes import client, config, stream
 IPYNB_TEST_FILE_PATH = "data/test_notebook.ipynb"
 
 
-def exec_into_pod(api, pod_name, namespace, command):
+def exec_in_pod(api, pod_name, namespace, command):
     return stream.stream(
         api.connect_get_namespaced_pod_exec,
         pod_name,
         namespace,
         command=command,
-        stderr=False,
+        stderr=True,
         stdin=False,
         stdout=True,
         tty=False,
@@ -58,6 +58,7 @@ def copy_file_to_pod(api, pod_name, namespace, source_file, destination_file):
 
 
 def test_jupyterhub_notebook(jupyterhub_namespace, jupyterhub_session_pod_name):
+    """Uploads a Jupyter notebook and executes it in the JupyterHub session."""
     config.load_kube_config()
     core_v1 = client.CoreV1Api()
 
@@ -71,7 +72,7 @@ def test_jupyterhub_notebook(jupyterhub_namespace, jupyterhub_session_pod_name):
 
     # In order to execute NB inside the python-3.9 conda environment, we install nbconvert to this "user" environment.
     # There is a better way to do this.
-    exec_into_pod(
+    exec_in_pod(
         core_v1,
         jupyterhub_session_pod_name,
         jupyterhub_namespace,
@@ -84,11 +85,41 @@ def test_jupyterhub_notebook(jupyterhub_namespace, jupyterhub_session_pod_name):
         ],
     )
 
-    output = exec_into_pod(
+    output = exec_in_pod(
         core_v1,
         jupyterhub_session_pod_name,
         jupyterhub_namespace,
         ["/bin/cat", "/tmp/test_notebook.nbconvert.ipynb"],
     )
-    asser_value = "\'infractl   "
-    assert asser_value in output, f"There is no {asser_value} in output: {output}"
+    assert 'infractl' in output, f"There is no 'infractl' in output: {output}"
+
+
+def test_jupyterhub_enable_ssh(jupyterhub_namespace, jupyterhub_session_pod_name):
+    """Enables ssh in the JupyterHub session."""
+    config.load_kube_config()
+    core_v1 = client.CoreV1Api()
+
+    _ = exec_in_pod(
+        core_v1,
+        jupyterhub_session_pod_name,
+        jupyterhub_namespace,
+        [
+            '/bin/bash',
+            '-c',
+            'echo "jovyan:insecure" | sudo chpasswd',
+        ],
+    )
+
+    output = exec_in_pod(
+        core_v1,
+        jupyterhub_session_pod_name,
+        jupyterhub_namespace,
+        [
+            '/bin/bash',
+            # Specify -l (login) option to execute ~/.profile and set conda environment 
+            '-lc',
+            'infractl ssh enable'
+        ],
+    )
+
+    assert 'log in to your session' in output
