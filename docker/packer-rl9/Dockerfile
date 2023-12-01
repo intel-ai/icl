@@ -16,7 +16,8 @@ RUN curl -fsSL https://apt.releases.hashicorp.com/gpg | apt-key add - && \
     apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main" && \
     apt-get update && apt-get install packer
 
-RUN useradd -m --uid 1002 ghrunner && groupadd -g ##KVM_GID## kvm && usermod -a -G kvm ghrunner
+ARG KVM_GID
+RUN useradd -m --uid 1002 ghrunner && groupadd -g $KVM_GID kvm && usermod -a -G kvm ghrunner
 
 USER ghrunner
 WORKDIR /home/ghrunner
