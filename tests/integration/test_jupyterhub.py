@@ -116,9 +116,9 @@ def test_jupyterhub_enable_ssh(jupyterhub_namespace, jupyterhub_session_pod_name
         jupyterhub_namespace,
         [
             '/bin/bash',
-            # Specify -l (login) option to execute ~/.profile and set conda environment 
+            # Specify -l (login) option to execute ~/.profile and set conda environment
             '-lc',
-            'infractl ssh enable'
+            'infractl ssh enable',
         ],
     )
 
