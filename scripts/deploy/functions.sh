@@ -16,7 +16,7 @@ function get_admin_token()
 {
   echo "Kubernetes Dashboard: https://dashboard.${ICL_INGRESS_DOMAIN}"
   echo "Cluster token for admin-user:"
-  kubectl -n kubernetes-dashboard create token admin-user
+  control_node kubectl -n kubernetes-dashboard create token admin-user
 }
 
 function warn_about_proxy_and_variables()
