@@ -10,48 +10,64 @@ class ProgramRun:
     """Class for representing the results and state of ICL program runs."""
 
     @abc.abstractmethod
-    async def wait(self, poll_interval=5) -> None:
-        pass
-
-    @abc.abstractmethod
     def is_scheduled(self) -> bool:
-        pass
+        """Returns True if the program is scheduled."""
 
     @abc.abstractmethod
     def is_pending(self) -> bool:
-        pass
+        """Returns True if the program is pending."""
 
     @abc.abstractmethod
     def is_running(self) -> bool:
-        pass
+        """Returns True if the program is running."""
 
     @abc.abstractmethod
     def is_completed(self) -> bool:
-        pass
+        """Returns True if the program is completed."""
 
     @abc.abstractmethod
     def is_failed(self) -> bool:
-        pass
+        """Returns True if the program is failed."""
 
     @abc.abstractmethod
     def is_crashed(self) -> bool:
-        pass
+        """Returns True if the program is crashed."""
 
     @abc.abstractmethod
     def is_cancelling(self) -> bool:
-        pass
+        """Returns True if the program is cancelling."""
 
     @abc.abstractmethod
     def is_cancelled(self) -> bool:
-        pass
+        """Returns True if the program is cancelled."""
 
     @abc.abstractmethod
     def is_final(self) -> bool:
-        pass
+        """Returns True if the program status is final (completed, cancelled, failed, crashed)."""
 
     @abc.abstractmethod
     def is_paused(self) -> bool:
-        pass
+        """Returns True if the program is paused."""
+
+    @abc.abstractmethod
+    async def wait(self) -> None:
+        """Wait for this program."""
+
+    @abc.abstractmethod
+    async def result(self) -> Any:
+        """Returns program result."""
+
+    @abc.abstractmethod
+    async def logs(self) -> List[str]:
+        """Returns program logs."""
+
+    @abc.abstractmethod
+    async def stream_logs(self, file=None) -> None:
+        """Stream logs until the terminal state is reached.
+
+        Args:
+            file: a file-like object (stream); defaults to the current sys.stdout.
+        """
 
 
 class Program:

@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Optional, Union
 
 import anyio
 import prefect
+from prefect import settings
 from prefect.client import orchestration
 from prefect.client.schemas.filters import LogFilter
 from prefect.utilities import importtools
@@ -53,7 +54,10 @@ class PrefectProgramRun(infractl.base.ProgramRun):
         return self._flow_run
 
     async def result(self) -> Any:
-        return await self._flow_run.state.result(fetch=True)
+        with settings.temporary_settings(
+            updates={settings.PREFECT_API_URL: str(self._prefect_client.api_url)},
+        ):
+            return await self._flow_run.state.result(fetch=True)
 
     async def update(self) -> None:
         self._flow_run = await self._prefect_client.read_flow_run(self._flow_run.id)
@@ -131,10 +135,8 @@ class PrefectProgramRun(infractl.base.ProgramRun):
             )
         return logs
 
-    async def stream_logs(self, poll_interval=5, file=None) -> None:
-        """
-        Stream logs until the terminal (COMPLETED, CANCELLED, FAILED, CRASHED) state is reached.
-        """
+    async def stream_logs(self, file=None, poll_interval=5) -> None:
+        """Stream logs until the terminal state is reached."""
         timestamp = None
         flow_run = self.get_flow_run()
         flow_run_id = flow_run.id
