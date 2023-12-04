@@ -9,7 +9,7 @@ resource "helm_release" "kubernetes-dashboard" {
     <<-EOT
       protocolHttp: true
       extraArgs:
-        - --enable-insecure-login
+        - --enable-insecure-login=false
       service:
         type: ClusterIP
       ingress:
