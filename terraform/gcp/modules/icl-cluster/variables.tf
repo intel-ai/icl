@@ -12,14 +12,3 @@ variable "machine_type" {
   description = "Machine type to use for GKE"
   type = string
 }
-
-variable "gpu_model" {
-  description = "Model of GPU to attach to nodes in pool"
-  type = string
-  default = "none"
-}
-
-variable "gpu_driver_version" {
-  default = "DEFAULT"
-  description = "the NVIDIA driver version to install"
-}

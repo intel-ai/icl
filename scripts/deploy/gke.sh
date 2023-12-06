@@ -7,7 +7,11 @@ set -e
 # Default values that can be overriden by corresponding environment variables
 : ${ICL_CLUSTER_NAME:="icl-$USER"}
 : ${ICL_GCP_ZONE:="us-central1-a"}
+: ${ICL_CLUSTER_NAME:="icl-$USER"}
+: ${ICL_GCP_ZONE:="us-central1-a"}
 : ${ICL_INGRESS_DOMAIN:="test.x1infra.com"}
+: ${ICL_CLUSTER_VERSION:="1.28"}
+: ${ICL_EXTERNALDNS_ENABLED:="false"}
 : ${ICL_CLUSTER_VERSION:="1.28"}
 : ${ICL_EXTERNALDNS_ENABLED:="false"}
 : ${CONTROL_NODE_IMAGE:="pbchekin/ccn-gcp:0.0.2"}
@@ -15,10 +19,11 @@ set -e
 : ${ICL_GCP_DRIVER_VERSION:="DEFAULT"}
 
 # Declare global variables. This allows variables like $GPU_TYPE to be used inside x1_terraform_args()
-declare -g GPU_ENABLED
 declare -g GPU_MODEL
 declare -g GPU_TYPE
-declare -g EXTRA_RESOURCE_LIMITS
+declare -g JUPYTERHUB_GPU_PROFILE_ENABLED
+declare -g JUPYTERHUB_EXTRA_RESOURCE_LIMITS
+declare -g JUPYTER_GPU_PROFILE_IMAGE
 
 #: ${ICL_GCP_REGION:="us-central1"}
 # disabled since we use monozone cluster
@@ -57,7 +62,7 @@ Environment variables:
   ICL_INGRESS_DOMAIN              Domain for ingress, default is test.x1infra.com
   GOOGLE_APPLICATION_CREDENTIALS  Location of a Google Cloud credential JSON file.
   ICL_GCP_MACHINE_TYPE            Machine type for GKE to use
-  GPU_TYPE                        Specifies the type of GPU resource to make available (amd, intel, nvidia)
+  GPU_TYPE                        Simple 'amd', 'intel', or 'nvidia' string. Used for kubespawner resource limits e.g. "gpu.intel.com/i915" = "1"
   TF_PG_CONN_STR                  If set, PostgreSQL backend will be used to store Terraform state 
   PGUSER                          PostgreSQL username for Terraform state
   PGPASSWORD                      PostgreSQL password for Terraform state
@@ -128,6 +133,7 @@ gcp_zone = "$ICL_GCP_ZONE"
 gcp_project = "$ICL_GCP_PROJECT_NAME"
 node_version = "$ICL_CLUSTER_VERSION"
 machine_type = "$ICL_GCP_MACHINE_TYPE"
+icl_gcp_driver_version = "$ICL_GCP_DRIVER_VERSION"
 gpu_model = "$GPU_MODEL"
 gpu_driver_version = "$ICL_GCP_DRIVER_VERSION"
 EOF
@@ -142,12 +148,13 @@ function x1_terraform_args() {
     -var default_storage_class="standard-rwo"
     -var ray_load_balancer_enabled=false
     -var externaldns_enabled="${ICL_EXTERNALDNS_ENABLED}"
-    -var use_node_ip_for_user_ports=true
-    -var use_external_node_ip_for_user_ports=true
-    -var jupyterhub_gpu_profile_enabled="${GPU_ENABLED}"
+    -var jupyterhub_gpu_profile_enabled="${JUPYTERHUB_GPU_PROFILE_ENABLED}"
     -var gpu_enabled="${GPU_ENABLED}"
     -var gpu_type="${GPU_TYPE}"
-    -var jupyterhub_extra_resource_limits="${EXTRA_RESOURCE_LIMITS}"
+    -var jupyterhub_extra_resource_limits="${JUPYTERHUB_EXTRA_RESOURCE_LIMITS}"
+    -var jupyterhub_gpu_profile_image="${JUPYTER_GPU_PROFILE_IMAGE}"
+    -var use_node_ip_for_user_ports=true
+    -var use_external_node_ip_for_user_ports=true
   )
   if [[ -v X1_TERRAFORM_DISABLE_LOCKING ]]; then
     terraform_extra_args+=( -lock=false )
@@ -329,6 +336,7 @@ if [[ " $1 " =~ " --console " ]]; then
 fi
 
 show_parameters
+set_gpu_type
 render_workspace
 deploy_gke
 update_config
