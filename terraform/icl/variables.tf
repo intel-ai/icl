@@ -280,3 +280,9 @@ variable "intel_gpu_enabled" {
   type = bool
   default = false
 }
+
+variable "nvidia_gpu_enabled" {
+  description = "Enable NVIDIA GPU support"
+  type = bool
+  default = false
+}

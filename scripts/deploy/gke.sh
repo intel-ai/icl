@@ -5,15 +5,15 @@
 set -e
 
 # Default values that can be overriden by corresponding environment variables
-: ${X1_CLUSTER_NAME:="x1-$USER"}
-: ${X1_GCP_ZONE:="us-central1-a"}
+: ${ICL_CLUSTER_NAME:="icl-$USER"}
+: ${ICL_GCP_ZONE:="us-central1-a"}
 : ${ICL_INGRESS_DOMAIN:="test.x1infra.com"}
-: ${X1_CLUSTER_VERSION:="1.28"}
-: ${X1_EXTERNALDNS_ENABLED:="false"}
+: ${ICL_CLUSTER_VERSION:="1.28"}
+: ${ICL_EXTERNALDNS_ENABLED:="false"}
 : ${CONTROL_NODE_IMAGE:="pbchekin/ccn-gcp:0.0.2"}
 : ${ICL_GCP_MACHINE_TYPE:="e2-standard-4"}
 
-#: ${X1_GCP_REGION:="us-central1"}
+#: ${ICL_GCP_REGION:="us-central1"}
 # disabled since we use monozone cluster
 
 # https://stackoverflow.com/questions/59895/getting-the-source-directory-of-a-bash-script-from-within
@@ -21,7 +21,7 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 source "$SCRIPT_DIR/functions.sh"
 # workspace is relative to PROJECT_ROOT
-WORKSPACE="workspace/$X1_CLUSTER_NAME"
+WORKSPACE="workspace/$ICL_CLUSTER_NAME"
 
 function show_help() {
   cat <<EOF
@@ -44,22 +44,41 @@ Options:
   --stop-proxy        Stop a proxy container
 
 Environment variables:
-  X1_CLUSTER_NAME                Cluster name, must be unique in the region, default is x1-$USER
-  X1_GCP_PROJECT_NAME            GCP project name
-  X1_GCP_ZONE                    GCP zone to use, default is us-central1-a
-  ICL_INGRESS_DOMAIN             Domain for ingress, default is test.x1infra.com
-  GOOGLE_APPLICATION_CREDENTIALS Location of a Google Cloud credential JSON file.
-  ICL_GCP_MACHINE_TYPE           Machine type for GKE to use
-  TF_PG_CONN_STR                 If set, PostgreSQL backend will be used to store Terraform state 
-  PGUSER                         PostgreSQL username for Terraform state
-  PGPASSWORD                     PostgreSQL password for Terraform state
+  ICL_CLUSTER_NAME                Cluster name, must be unique in the region, default is icl-$USER
+  ICL_GCP_PROJECT_NAME            GCP project name
+  ICL_GCP_ZONE                    GCP zone to use, default is us-central1-a
+  ICL_INGRESS_DOMAIN              Domain for ingress, default is test.x1infra.com
+  GOOGLE_APPLICATION_CREDENTIALS  Location of a Google Cloud credential JSON file.
+  ICL_GCP_MACHINE_TYPE            Machine type for GKE to use
+  GPU_TYPE                        Specifies the type of GPU resource to make available e.g. "gpu.intel.com/i915" = "1"
+  TF_PG_CONN_STR                  If set, PostgreSQL backend will be used to store Terraform state 
+  PGUSER                          PostgreSQL username for Terraform state
+  PGPASSWORD                      PostgreSQL password for Terraform state
 EOF
 }
 
 function show_parameters() {
-  for var in X1_GCP_ZONE ICL_INGRESS_DOMAIN WORKSPACE ICL_GCP_MACHINE_TYPE; do
+  for var in ICL_GCP_ZONE ICL_INGRESS_DOMAIN WORKSPACE; do
     echo "$var: ${!var}"
   done
+}
+
+# Queries for the specific GPU included in the provided ICL_GCP_MACHINE_TYPE and ICL_GCP_ZONE
+function set_gpu_type() {
+  control_node "\
+    GPU_MODEL=$(gcloud compute machine-types describe $ICL_GCP_MACHINE_TYPE --zone $ICL_GCP_ZONE --format=json | jq -r '.accelerators[].guestAcceleratorType' | tr '[:upper:]' '[:lower:]')
+    # Check if it contains the substrings amd, intel, or nvidia
+    if ($GPU_MODEL -like '*nvidia*') {
+        GPU_TYPE = nvidia
+    } elseif ($GPU_MODEL -like '*intel*') {
+        Write-Host "GPU Type contains 'intel'"
+        GPU_TYPE = amd
+    } elseif ($GPU_MODEL -like '*amd*') {
+        Write-Host "GPU Type contains 'amd'"
+        GPU_TYPE = intel
+    } else {
+        Write-Host "GPU_TYPE does not contain 'amd,' 'intel,' or 'nvidia'"
+    }
 }
 
 # TODO: add cluster_version here
@@ -73,10 +92,10 @@ EOF
   fi
 
   cat <<EOF >> "$WORKSPACE/terraform/gcp/terraform.tfvars"
-cluster_name = "$X1_CLUSTER_NAME"
-gcp_zone = "$X1_GCP_ZONE"
-gcp_project = "$X1_GCP_PROJECT_NAME"
-node_version = "$X1_CLUSTER_VERSION"
+cluster_name = "$ICL_CLUSTER_NAME"
+gcp_zone = "$ICL_GCP_ZONE"
+gcp_project = "$ICL_GCP_PROJECT_NAME"
+node_version = "$ICL_CLUSTER_VERSION"
 machine_type = "$ICL_GCP_MACHINE_TYPE"
 EOF
 }
@@ -89,7 +108,9 @@ function x1_terraform_args() {
     -var local_path_enabled=false # use standard-rwo for GKE instead
     -var default_storage_class="standard-rwo"
     -var ray_load_balancer_enabled=false
-    -var externaldns_enabled="${X1_EXTERNALDNS_ENABLED}"
+    -var externaldns_enabled="${ICL_EXTERNALDNS_ENABLED}"
+    -var jupyterhub_gpu_profile_enabled=true
+    -var gpu_type="${GPU_TYPE}"
   )
   if [[ -v X1_TERRAFORM_DISABLE_LOCKING ]]; then
     terraform_extra_args+=( -lock=false )
@@ -100,9 +121,9 @@ function x1_terraform_args() {
 
 #function gke_terraform_args() {
 #  terraform_extra_args=(
-#  -var cluster_name="$X1_CLUSTER_NAME"
-#  -var gcp_region="$X1_GCP_REGION"
-# -var gcp_project="$X1_GCP_PROJECT_NAME"
+#  -var cluster_name="$ICL_CLUSTER_NAME"
+#  -var gcp_region="$ICL_GCP_REGION"
+#  -var gcp_project="$ICL_GCP_PROJECT_NAME"
 #  )
 #  echo "${terraform_extra_args[*]}"
 #}
@@ -125,7 +146,7 @@ function delete_gke() {
 }
 
 function update_config() {
-  control_node "gcloud container clusters get-credentials $X1_CLUSTER_NAME --zone=$X1_GCP_ZONE"
+  control_node "gcloud container clusters get-credentials $ICL_CLUSTER_NAME --zone=$ICL_GCP_ZONE"
 }
 
 # Create workspace
@@ -159,8 +180,7 @@ function delete_cluster() {
   control_node "rm -rf /work/x1/$WORKSPACE"
 }
 
-function gcloud_login()
-{
+function gcloud_login() {
   echo "This will store configuration in ~/.config/gcloud" 2>&1
   install -d ${HOME}/.config/gcloud
   control_node "set -x;
@@ -170,12 +190,12 @@ function gcloud_login()
       gcloud auth application-default login \
       && gcloud auth login
     fi
-    gcloud config set --quiet project $X1_GCP_PROJECT_NAME"
+    gcloud config set --quiet project $ICL_GCP_PROJECT_NAME"
 }
 
-if [[ -z "${X1_GCP_PROJECT_NAME}" ]];
+if [[ -z "${ICL_GCP_PROJECT_NAME}" ]];
 then
-  echo "Please set X1_GCP_PROJECT_NAME." >&2
+  echo "Please set ICL_GCP_PROJECT_NAME." >&2
   exit 1
 fi
 
@@ -271,6 +291,7 @@ if [[ " $1 " =~ " --console " ]]; then
 fi
 
 show_parameters
+set_gpu_type
 render_workspace
 deploy_gke
 update_config
