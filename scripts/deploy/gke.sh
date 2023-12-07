@@ -273,6 +273,7 @@ if [[ " $@ " =~ " --config " ]]; then
 fi
 
 if [[ " $@ " =~ " --deploy-x1 " ]]; then
+  set_gpu_type
   deploy_x1
   exit 0
 fi
@@ -336,8 +337,8 @@ if [[ " $1 " =~ " --console " ]]; then
 fi
 
 show_parameters
-set_gpu_type
 render_workspace
+set_gpu_type
 deploy_gke
 update_config
 set_gpu_type

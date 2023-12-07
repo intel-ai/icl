@@ -187,9 +187,9 @@ module "intel-gpu" {
 }
 
 #module "nvidia-gpu" {
+#  depends_on = [module.nfd]
 #  count = var.gpu_type == "nvidia" ? 1 : 0
 #  source = "../modules/nvidia-gpu"
-#  cloud_platform = var.cloud_platform
 #}
 
 module "icl-hub" {
