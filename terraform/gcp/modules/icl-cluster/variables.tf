@@ -12,8 +12,3 @@ variable "machine_type" {
   description = "Machine type to use for GKE"
   type = string
 }
-
-variable "gpu_type" {
-  description = "GPU brand (nvidia, amd, intel) in nodes"
-  type = string
-}

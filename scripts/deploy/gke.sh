@@ -13,6 +13,11 @@ set -e
 : ${CONTROL_NODE_IMAGE:="pbchekin/ccn-gcp:0.0.2"}
 : ${ICL_GCP_MACHINE_TYPE:="e2-standard-4"}
 
+# Declare global variables. This allows variables like $GPU_TYPE to be used inside x1_terraform_args()
+declare -g GPU_ENABLED
+declare -g GPU_TYPE
+declare -g EXTRA_RESOURCE_LIMITS
+
 #: ${ICL_GCP_REGION:="us-central1"}
 # disabled since we use monozone cluster
 
@@ -50,7 +55,7 @@ Environment variables:
   ICL_INGRESS_DOMAIN              Domain for ingress, default is test.x1infra.com
   GOOGLE_APPLICATION_CREDENTIALS  Location of a Google Cloud credential JSON file.
   ICL_GCP_MACHINE_TYPE            Machine type for GKE to use
-  GPU_TYPE                        Specifies the type of GPU resource to make available e.g. "gpu.intel.com/i915" = "1"
+  GPU_TYPE                        Specifies the type of GPU resource to make available (amd, intel, nvidia)
   TF_PG_CONN_STR                  If set, PostgreSQL backend will be used to store Terraform state 
   PGUSER                          PostgreSQL username for Terraform state
   PGPASSWORD                      PostgreSQL password for Terraform state
@@ -65,20 +70,33 @@ function show_parameters() {
 
 # Queries for the specific GPU included in the provided ICL_GCP_MACHINE_TYPE and ICL_GCP_ZONE
 function set_gpu_type() {
-  control_node "\
-    GPU_MODEL=$(gcloud compute machine-types describe $ICL_GCP_MACHINE_TYPE --zone $ICL_GCP_ZONE --format=json | jq -r '.accelerators[].guestAcceleratorType' | tr '[:upper:]' '[:lower:]')
-    # Check if it contains the substrings amd, intel, or nvidia
-    if ($GPU_MODEL -like '*nvidia*') {
-        GPU_TYPE = nvidia
-    } elseif ($GPU_MODEL -like '*intel*') {
-        Write-Host "GPU Type contains 'intel'"
-        GPU_TYPE = amd
-    } elseif ($GPU_MODEL -like '*amd*') {
-        Write-Host "GPU Type contains 'amd'"
-        GPU_TYPE = intel
-    } else {
-        Write-Host "GPU_TYPE does not contain 'amd,' 'intel,' or 'nvidia'"
-    }
+    GPU_MODEL=$(control_node "gcloud compute machine-types describe $ICL_GCP_MACHINE_TYPE --zone $ICL_GCP_ZONE --format=json | jq -r '.accelerators[].guestAcceleratorType' | tr '[:upper:]' '[:lower:]' | tr -d '\r'")
+    # Check if GPU_MODEL contains the substrings amd, intel, or nvidia
+    if [[ $GPU_MODEL == *"nvidia"* ]]; then
+        GPU_ENABLED=true
+        GPU_TYPE="nvidia"
+        EXTRA_RESOURCE_LIMITS='{\"nvidia.com/gpu\"=\"1\"}'
+    elif [[ $GPU_MODEL == *"intel"* ]]; then
+        echo "GPU Type contains 'intel'"
+        GPU_ENABLED=true
+        GPU_TYPE="intel"
+        EXTRA_RESOURCE_LIMITS='{\"gpu.intel.com/i915\"=\"1\"}'
+    elif [[ $GPU_MODEL == *"amd"* ]]; then
+        echo "GPU Type contains 'amd'"
+        GPU_ENABLED=true
+        GPU_TYPE="amd"
+        EXTRA_RESOURCE_LIMITS='{\"amd.com/gpu\"=\"1\"}'
+    else
+        echo "GPU_TYPE does not contain 'amd', 'intel', or 'nvidia'"
+        GPU_ENABLED=false
+        GPU_TYPE="none"
+        EXTRA_RESOURCE_LIMITS='{}'
+    fi
+
+    echo $GPU_MODEL
+    echo $GPU_ENABLED
+    echo $GPU_TYPE
+    echo $EXTRA_RESOURCE_LIMITS
 }
 
 # TODO: add cluster_version here
@@ -109,8 +127,10 @@ function x1_terraform_args() {
     -var default_storage_class="standard-rwo"
     -var ray_load_balancer_enabled=false
     -var externaldns_enabled="${ICL_EXTERNALDNS_ENABLED}"
-    -var jupyterhub_gpu_profile_enabled=true
+    -var jupyterhub_gpu_profile_enabled="${GPU_ENABLED}"
+    -var gpu_enabled="${GPU_ENABLED}"
     -var gpu_type="${GPU_TYPE}"
+    -var jupyterhub_extra_resource_limits="${EXTRA_RESOURCE_LIMITS}"
   )
   if [[ -v X1_TERRAFORM_DISABLE_LOCKING ]]; then
     terraform_extra_args+=( -lock=false )
@@ -228,6 +248,7 @@ if [[ " $@ " =~ " --config " ]]; then
 fi
 
 if [[ " $@ " =~ " --deploy-x1 " ]]; then
+  set_gpu_type
   deploy_x1
   exit 0
 fi
@@ -291,8 +312,8 @@ if [[ " $1 " =~ " --console " ]]; then
 fi
 
 show_parameters
-set_gpu_type
 render_workspace
+set_gpu_type
 deploy_gke
 update_config
 deploy_x1

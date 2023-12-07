@@ -275,14 +275,26 @@ variable "nfd_enabled" {
   default = false
 }
 
-variable "intel_gpu_enabled" {
-  description = "Enable Intel GPU support"
+variable "gpu_enabled" {
+  description = "Enable GPU support"
   type = bool
   default = false
 }
 
-variable "nvidia_gpu_enabled" {
-  description = "Enable NVIDIA GPU support"
+variable "gpu_type" {
+  description = "Specifies the type of GPU (amd, intel, nvidia) to configure"
+  type = string
+  default = "none"
+}
+
+variable "jupyterhub_extra_resource_limits" {
+  description = "Extra resource limits for JupyterHub, e.g., GPU resources"
+  type        = map(string)
+  default     = {}
+}
+
+variable "jupyterhub_gpu_profile_enabled" {
+  description = "Enable JupyterHub GPU profile"
   type = bool
   default = false
 }
