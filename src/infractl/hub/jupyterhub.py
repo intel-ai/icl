@@ -380,7 +380,7 @@ def enable_ssh(username: str, key: Optional[str] = None) -> str:
 
     use_node_ip_for_user_ports = config.get().get('use_node_ip_for_user_ports')
     ingress_domain = config.get().get('ingress_domain')
-    print('ingress_domain', ssh_proxy)
+    print('ingress_domain', ingress_domain)
     ssh_host = get_node_ip(pod.spec.node_name) if use_node_ip_for_user_ports else ingress_domain
     ssh_args = f'jovyan@{ssh_host} -p {response.spec.ports[0].node_port}'
     if jumphost:
