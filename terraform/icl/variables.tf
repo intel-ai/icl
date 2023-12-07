@@ -280,3 +280,9 @@ variable "intel_gpu_enabled" {
   type = bool
   default = false
 }
+
+variable "use_node_ip_for_user_ports" {
+  description = "Use k8s node's IP address when exposing user ports"
+  type = bool 
+  default = false
+}
