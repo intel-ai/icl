@@ -17,6 +17,7 @@ resource "kubernetes_config_map" "config" {
     "hub.toml" = <<-EOF
       ingress_domain = "${var.ingress_domain}"
       use_node_ip_for_user_ports = "${var.use_node_ip_for_user_ports}"
+      use_external_node_ip_for_user_ports = "${var.use_external_node_ip_for_user_ports}"
     EOF
   }
 }
@@ -45,7 +46,7 @@ resource "kubernetes_deployment" "icl-hub" {
       spec {
         container {
           name = "icl-hub"
-          image = "pbchekin/icl-hub:0.0.3"
+          image = "docker.io/kwasd/icl-hub:0.0.4b1"
           command = [
             "python", "-m", "infractl.hub.main", "server", "start"
           ]
