@@ -163,13 +163,18 @@ def get_hub_pod(namespace: str) -> client.V1Pod:
 
 def get_node_ip(name: str, external: bool = False) -> str:
     """Returns node IP address."""
+    external_ip = None
+    internal_ip = None
+
     response = kube.api().core_v1().read_node_status(name)
     for address in response.status.addresses:
-        if address.type == 'ExternalIP' and external is True:
-            return address.address
+        if address.type == 'ExternalIP':
+            external_ip = address.address
         if address.type == 'InternalIP':
-            return address.address
-    return name
+            internal_ip = address.address
+    if external_ip and external:
+        return external_ip
+    return internal_ip or name
 
 
 def get_user_id(username: str) -> str:
