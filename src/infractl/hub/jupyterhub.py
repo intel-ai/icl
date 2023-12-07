@@ -378,9 +378,10 @@ def enable_ssh(username: str, key: Optional[str] = None) -> str:
             if error.status != 404:
                 raise error
 
-    ssh_proxy = config.get().get('ingress_domain')
+    use_node_ip_for_user_ports = config.get().get('use_node_ip_for_user_ports')
+    ingress_domain = config.get().get('use_node_ip_for_ssh')
     print('ingress_domain', ssh_proxy)
-    ssh_host = ssh_proxy or get_node_ip(pod.spec.node_name)
+    ssh_host = get_node_ip(pod.spec.node_name) if use_node_ip_for_user_ports else ingress_domain
     ssh_args = f'jovyan@{ssh_host} -p {response.spec.ports[0].node_port}'
     if jumphost:
         return f'ssh -J {jumphost} {ssh_args}'

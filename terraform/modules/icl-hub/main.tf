@@ -16,6 +16,7 @@ resource "kubernetes_config_map" "config" {
   data = {
     "hub.toml" = <<-EOF
       ingress_domain = "${var.ingress_domain}"
+      use_node_ip_for_user_ports = "${var.use_node_ip_for_user_ports}"
     EOF
   }
 }
