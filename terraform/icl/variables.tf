@@ -298,3 +298,9 @@ variable "jupyterhub_gpu_profile_enabled" {
   type = bool
   default = false
 }
+
+variable "cloud_platform" {
+  description = "Which cloud platform is being used e.g. aws or gcp"
+  type = string
+  default = "none"
+}

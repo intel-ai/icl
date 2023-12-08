@@ -93,10 +93,20 @@ function set_gpu_type() {
         EXTRA_RESOURCE_LIMITS='{}'
     fi
 
+    check_gpu_settings
+}
+
+function check_gpu_settings() {
     echo $GPU_MODEL
     echo $GPU_ENABLED
     echo $GPU_TYPE
     echo $EXTRA_RESOURCE_LIMITS
+    if [[ "${GPU_ENABLED}" == "true" ]]; then
+        if [[ -z "${GPU_TYPE}" || -z "${EXTRA_RESOURCE_LIMITS}" ]]; then
+            echo "Warning: GPU is enabled but GPU_TYPE or EXTRA_RESOURCE_LIMITS are not set."
+            exit 800
+        fi
+    fi
 }
 
 # TODO: add cluster_version here
@@ -131,6 +141,7 @@ function x1_terraform_args() {
     -var gpu_enabled="${GPU_ENABLED}"
     -var gpu_type="${GPU_TYPE}"
     -var jupyterhub_extra_resource_limits="${EXTRA_RESOURCE_LIMITS}"
+    -var cloud_platform="gcp"
   )
   if [[ -v X1_TERRAFORM_DISABLE_LOCKING ]]; then
     terraform_extra_args+=( -lock=false )
@@ -313,8 +324,8 @@ fi
 
 show_parameters
 render_workspace
-set_gpu_type
 deploy_gke
 update_config
+set_gpu_type
 deploy_x1
 get_admin_token

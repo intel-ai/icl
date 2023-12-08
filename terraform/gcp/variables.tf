@@ -3,13 +3,8 @@ variable "cluster_name" {
   type = string
 }
 
-#variable "gcp_region" {
-#  description = "Name of GKE region"
-#  type = string
-#}
-
-variable "gcp_zone" {
-  description = "Name of GKE zone"
+variable "gcp_project" {
+  description = "Name of GKE project"
   type = string
 }
 
@@ -18,8 +13,8 @@ variable "gcp_zone" {
 #  type = string
 #}
 
-variable "gcp_project" {
-  description = "Name of GKE project"
+variable "gcp_zone" {
+  description = "Name of GKE zone"
   type = string
 }
 
