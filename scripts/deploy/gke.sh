@@ -106,7 +106,6 @@ function set_gpu_type() {
 function check_gpu_settings() {
     echo $GPU_MODEL
     echo $GPU_ENABLED
-    echo $GPU_MODEL
     echo $GPU_TYPE
     echo $EXTRA_RESOURCE_LIMITS
     if [[ "${GPU_ENABLED}" == "true" ]]; then
@@ -338,7 +337,6 @@ fi
 
 show_parameters
 render_workspace
-set_gpu_type
 deploy_gke
 update_config
 set_gpu_type

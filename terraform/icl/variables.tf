@@ -323,3 +323,8 @@ variable "jupyterhub_extra_resource_limits" {
   default     = {}
 }
 
+variable "jupyterhub_gpu_profile_enabled" {
+  description = "Enable JupyterHub GPU profile"
+  type = bool
+  default = false
+}
