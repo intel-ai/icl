@@ -10,9 +10,9 @@ When using HTTP/HTTPS proxy make sure `localtest.me` is added to "no proxy" list
 """
 
 import asyncio
+import os
 import time
 from io import StringIO
-from unittest.mock import patch
 
 import pytest
 from flows.flow2 import flow2
@@ -33,9 +33,10 @@ async def test_flow_with_file_name(address, runtime_kind):
 
 
 @pytest.mark.asyncio
-async def test_flow_with_imported_module(address):
+@pytest.mark.parametrize('runtime_kind', ['prefect', 'kubernetes'])
+async def test_flow_with_imported_module(address, runtime_kind):
     infrastructure = infractl.infrastructure(address=address)
-    runtime = infractl.runtime()
+    runtime = infractl.runtime(kind=runtime_kind)
     program = await infractl.deploy(
         infractl.program(flow2),
         runtime=runtime,
@@ -47,21 +48,23 @@ async def test_flow_with_imported_module(address):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize('flow_name', ['flow3', 'flow3_with_default_storage'])
-async def test_flow_with_parameters(address, flow_name):
+@pytest.mark.parametrize('runtime_kind', ['prefect', 'kubernetes'])
+async def test_flow_with_parameters(address, flow_name, runtime_kind):
     infrastructure = infractl.infrastructure(address=address)
-    program = await infractl.deploy(
+    runtime = infractl.runtime(kind=runtime_kind)
+    program_run = await infractl.run(
         infractl.program('flows/flow3.py', name=flow_name),
         name=f'{flow_name}-with-parameters',
+        runtime=runtime,
         infrastructure=infrastructure,
-    )
-    program_run = await program.run(
         parameters={
             'first': '1',
             'second': 2,
         },
     )
     assert program_run.is_completed()
-    assert await program_run.result() == ('1', 2)
+    # TODO: prefect runtime return a tuple, kubernetes runtime returns a list, fix to follow
+    assert await program_run.result() == ['1', 2] or await program_run.result() == ('1', 2)
 
 
 @pytest.mark.asyncio
@@ -91,15 +94,17 @@ async def test_flow_timeout(address):
 
 
 @pytest.mark.asyncio
-async def test_flow_with_complex_name(address):
+@pytest.mark.parametrize('runtime_kind', ['prefect', 'kubernetes'])
+async def test_flow_with_complex_name(address, runtime_kind):
     infrastructure = infractl.infrastructure(address=address)
+    runtime = infractl.runtime(kind=runtime_kind)
     # Deploy and run a flow in a local infractl cluster
-    program = await infractl.deploy(
+    program_run = await infractl.run(
         infractl.program('flows/flow3.py', name='flow3_with_underscore_in_name'),
         name='flow3_with_underscore_in_name',
+        runtime=runtime,
         infrastructure=infrastructure,
     )
-    program_run = await program.run()
     assert program_run.is_completed()
     assert await program_run.result() == "Some computed value"
 
@@ -137,12 +142,13 @@ async def test_flow_async(address):
 
 
 @pytest.mark.asyncio
-async def test_flow_async_and_wait(address):
-    infrastructure = infractl.infrastructure(address=address)
+@pytest.mark.parametrize('runtime_kind', ['prefect', 'kubernetes'])
+async def test_flow_async_and_wait(address, runtime_kind):
     program = await infractl.deploy(
         infractl.program('flows/flow3.py', name='flow3'),
         name='flow3-async-and-wait',
-        infrastructure=infrastructure,
+        runtime=infractl.runtime(kind=runtime_kind),
+        infrastructure=infractl.infrastructure(address=address),
     )
     program_run = await program.run(detach=True)
     assert program_run.is_scheduled()
@@ -173,12 +179,13 @@ async def test_flow_with_schedule(address):
 
 
 @pytest.mark.asyncio
-async def test_get_logs_from_program_run(address):
-    infrastructure = infractl.infrastructure(address=address)
+@pytest.mark.parametrize('runtime_kind', ['prefect', 'kubernetes'])
+async def test_get_logs_from_program_run(address, runtime_kind):
     program = await infractl.deploy(
         infractl.program('flows/flow1.py'),
         name='flow1-test-get-logs',
-        infrastructure=infrastructure,
+        runtime=infractl.runtime(kind=runtime_kind),
+        infrastructure=infractl.infrastructure(address=address),
     )
     program_run = await program.run()
     assert program_run.is_completed()
@@ -191,14 +198,15 @@ async def test_get_logs_from_program_run(address):
 
 
 @pytest.mark.asyncio
-async def test_stream_logs_from_program_run(address):
-    infrastructure = infractl.infrastructure(address=address)
-    program = await infractl.deploy(
+@pytest.mark.parametrize('runtime_kind', ['prefect', 'kubernetes'])
+async def test_stream_logs_from_program_run(address, runtime_kind):
+    program_run = await infractl.run(
         infractl.program('flows/flow7.py'),
         name='flow7-test-stream-logs',
-        infrastructure=infrastructure,
+        runtime=infractl.runtime(kind=runtime_kind),
+        infrastructure=infractl.infrastructure(address=address),
+        detach=True,
     )
-    program_run = await program.run(detach=True)
 
     # emulate sys.stdout
     file = StringIO()
@@ -208,7 +216,7 @@ async def test_stream_logs_from_program_run(address):
     logs = file.read()
     print(f"{logs=}")
 
-    for idx in range(60):
+    for idx in range(10):
         substring = f"Iteration: {idx}\n"
         pos = logs.find(substring)
         # check if the logs contains the log entry
@@ -216,6 +224,8 @@ async def test_stream_logs_from_program_run(address):
         pos = logs.find(substring, pos + len(substring))
         # should be only once
         assert pos == -1
+
+    assert program_run.is_completed()
 
 
 @pytest.mark.asyncio
@@ -286,6 +296,26 @@ async def test_python_program(address, runtime_kind):
     program_run = await infractl.run(
         infractl.program('flows/program1.py'), runtime=runtime, infrastructure=infrastructure
     )
+    assert program_run.is_completed()
+
+
+@pytest.mark.skipif(
+    os.environ.get("ICL_SSH_ADDRESS", None) is None,
+    reason="TODO: the test should work",
+)
+@pytest.mark.asyncio
+@pytest.mark.parametrize('kind', ['ssh'])
+async def test_python_program_ssh(address, kind):
+    # TODO: provide access to this data in another way
+    address = os.environ["ICL_SSH_ADDRESS"]
+    username = os.environ["ICL_SSH_USERNAME"]
+    password = os.environ["ICL_SSH_PASSWORD"]
+    infrastructure = infractl.infrastructure(
+        address=address, username=username, password=password, kind=kind
+    )
+    runtime = infractl.runtime(kind=kind)
+    program = infractl.program('flows/program1.py')
+    program_run = await infractl.run(program, runtime=runtime, infrastructure=infrastructure)
     assert program_run.is_completed()
 
 

@@ -1,11 +1,20 @@
-"""ICL Kubernetes runtime implementation."""
+"""ICL Kubernetes runtime implementation.
+
+TODO:
+* deployment timeout
+* run timeout
+* cancel (required for integration test)
+"""
 
 from __future__ import annotations
 
 import base64
+import enum
+import functools
 import pathlib
 import random
 import string
+import sys
 import tempfile
 from typing import Any, Dict, List, Optional, Union
 
@@ -20,6 +29,10 @@ from infractl.plugins.kubernetes_runtime import engine
 from infractl.plugins.kubernetes_runtime.program import load
 
 KubernetesManifest = infractl.base.KubernetesManifest
+
+
+class KubernetesRuntimeError(Exception):
+    """Kubernetes runtime error."""
 
 
 class KubernetesRuntimeSettings:
@@ -91,7 +104,10 @@ class KubernetesRuntimeImplementation(
 
         program_path = pathlib.Path(program.path)
         random_part = ''.join(random.choices(string.ascii_letters + string.digits, k=5))
-        name = name or identity.generate(suffix=f'{program_path.stem}-{random_part}')
+        if name:
+            name = identity.sanitize(name)
+        else:
+            name = identity.generate(suffix=f'{program_path.stem}-{random_part}')
 
         base_path = f'{self.settings.s3_base_path}/{name}'
         remote_fs = s3fs.S3FileSystem(**self.settings.remote_fs_spec)
@@ -134,6 +150,7 @@ class KubernetesRuntimeImplementation(
         job.spec.template.spec.containers[0].working_dir = self.settings.working_dir
 
         s3cmd_get = 's3cmd --config=/secrets/.s3cfg get --recursive --force'
+        s3cmd_put = 's3cmd --config=/secrets/.s3cfg put --force'
         engine_cmd = f'python $__ICL_DATA_DIR/engine.py {program_path.name}'
         if program.name:
             engine_cmd += f' --entrypoint {program.name}'
@@ -157,10 +174,13 @@ class KubernetesRuntimeImplementation(
             'ls -l . $__ICL_DATA_DIR',
             'export PYTHONPATH=$PWD',
             engine_cmd,
+            'if [[ -f "$__ICL_DATA_DIR/result.json" ]]; then',
+            f'  {s3cmd_put} "$__ICL_DATA_DIR/result.json" s3://{data_path}/',
+            'fi',
         ]
         job.spec.template.spec.containers[0].command = [
             '/bin/bash',
-            '-xc',
+            '-xec',
             '\n'.join(command_lines),
         ]
 
@@ -182,15 +202,29 @@ class KubernetesRuntimeImplementation(
         )
 
 
+class ProgramState(enum.Enum):
+    UNKNOWN = enum.auto()
+    SCHEDULED = enum.auto()
+    RUNNING = enum.auto()
+    COMPLETED = enum.auto()
+    FAILED = enum.auto()
+
+    def capitalize(self) -> str:
+        """Returns a capitalized state, for example "Completed"."""
+        return self.name.lower().capitalize()
+
+
 class KubernetesRunner(infractl.base.Runnable):
     """Kubernetes runner."""
 
     manifest: client.V1Job
     storage: RemoteStorage
+    state: ProgramState
 
     def __init__(self, manifest: client.V1Job, storage: RemoteStorage):
         self.manifest = manifest
         self.storage = storage
+        self.state = ProgramState.UNKNOWN
 
     @property
     def name(self):
@@ -201,6 +235,11 @@ class KubernetesRunner(infractl.base.Runnable):
     def namespace(self):
         """Return Job namespace."""
         return self.manifest.metadata.namespace
+
+    @property
+    def data_path(self):
+        """Returns data path."""
+        return f'{self.storage.base_path}/data'
 
     async def run(
         self,
@@ -221,63 +260,48 @@ class KubernetesRunner(infractl.base.Runnable):
 
         # upload parameters
         if parameters:
-            data_path = f'{self.storage.base_path}/data'
             with tempfile.NamedTemporaryFile(delete=False) as requirements_file:
                 requirements_file.write(engine.dumps(parameters))
                 requirements_file.flush()
                 requirements_file.close()
                 self.storage.fs.put(
                     lpath=requirements_file.name,
-                    rpath=f'{data_path}/parameters.json',
+                    rpath=f'{self.data_path}/parameters.json',
                 )
 
         kubernetes.api().recreate_job(namespace=self.namespace, body=self.manifest)
+        self.state = ProgramState.SCHEDULED
 
-        for event in watch.Watch().stream(
-            func=kubernetes.api().core_v1().list_namespaced_pod,
-            namespace=self.namespace,
-            timeout_seconds=timeout,
-            label_selector=f'job-name={self.name}',
-        ):
-            if event['object'].status.phase == 'Succeeded':
-                return KubernetesProgramRun(name=self.name, completed=True)
-            elif event['object'].status.phase == 'Failed':
-                return KubernetesProgramRun(name=self.name, completed=False)
-            elif event['object'].status.phase == 'Running':
-                continue
-            # deleted while watching for it
-            if event['type'] == 'DELETED':
-                return KubernetesProgramRun(name=self.name, completed=False, message='Cancelled')
-        # TODO: stop job if it is still running
-        return KubernetesProgramRun(name=self.name, completed=False, message='Timed out')
+        program_run = KubernetesProgramRun(self, timeout=timeout)
+        if not detach:
+            await program_run.wait()
+        return program_run
 
 
 class KubernetesProgramRun(infractl.base.ProgramRun):
     """Kubernetes program run."""
 
-    name: str
-    completed: bool
-    message: Optional[str]
+    runner: KubernetesRunner
+    timeout: Optional[float] = None
 
-    def __init__(self, name: str, completed: bool = True, message: Optional[str] = None):
-        self.name = name
-        self.completed = completed
-        self.message = message
+    def __init__(self, runner: KubernetesRunner, timeout: Optional[float] = None):
+        self.runner = runner
+        self.timeout = timeout
 
     def is_scheduled(self) -> bool:
-        return True
+        return self.runner.state == ProgramState.SCHEDULED
 
     def is_pending(self) -> bool:
         return False
 
     def is_running(self) -> bool:
-        return False
+        return self.runner.state == ProgramState.RUNNING
 
     def is_completed(self) -> bool:
-        return self.completed
+        return self.runner.state == ProgramState.COMPLETED
 
     def is_failed(self) -> bool:
-        return not self.completed
+        return self.runner.state == ProgramState.FAILED
 
     def is_crashed(self) -> bool:
         return False
@@ -289,21 +313,102 @@ class KubernetesProgramRun(infractl.base.ProgramRun):
         return False
 
     def is_final(self) -> bool:
-        return True
+        return self.runner.state in (ProgramState.COMPLETED, ProgramState.FAILED)
 
     def is_paused(self) -> bool:
         return False
 
-    async def wait(self, poll_interval=5) -> None:
-        raise NotImplementedError()
+    @functools.cached_property
+    def pod_name(self) -> str:
+        """Returns program pod name"""
+        pod_list: client.V1PodList = (
+            kubernetes.api()
+            .core_v1()
+            .list_namespaced_pod(
+                namespace=self.runner.namespace,
+                label_selector=f'job-name={self.runner.name}',
+            )
+        )
+        if len(pod_list.items) > 1:
+            raise KubernetesRuntimeError(f'Multiple pods for job {self.runner.name}')
+        if len(pod_list.items) < 1:
+            raise KubernetesRuntimeError(f'Pod not found for job {self.runner.name}')
+        return pod_list.items[0].metadata.name
+
+    async def wait(self, wait_for: Optional[ProgramState] = None) -> None:
+        for event in watch.Watch().stream(
+            func=kubernetes.api().core_v1().list_namespaced_pod,
+            namespace=self.runner.namespace,
+            timeout_seconds=3600,
+            label_selector=f'job-name={self.runner.name}',
+        ):
+            if event['object'].status.phase == 'Succeeded':
+                self.runner.state = ProgramState.COMPLETED
+                return
+            elif event['object'].status.phase == 'Failed':
+                self.runner.state = ProgramState.FAILED
+                return
+            elif event['object'].status.phase == 'Running':
+                self.runner.state = ProgramState.RUNNING
+                if self.runner.state == wait_for:
+                    return
+            # deleted while watching for it
+            if event['type'] == 'DELETED':
+                self.runner.state = ProgramState.FAILED
+                return
+
+        # timed out
+        # TODO: timed out, stop job if it is still running
+
+    async def result(self) -> Any:
+        """Returns program result."""
+        result_remote_path = f'{self.runner.data_path}/result.json'
+        if not self.runner.storage.fs.exists(result_remote_path):
+            return None
+        with tempfile.TemporaryDirectory() as dirname:
+            result_path = pathlib.Path(dirname) / 'results.json'
+            self.runner.storage.fs.get(rpath=result_remote_path, lpath=str(result_path))
+            with result_path.open('rb') as result_file:
+                return engine.loads(result_file.read())
+
+    async def logs(self) -> List[str]:
+        """Returns program logs."""
+        return (
+            kubernetes.api()
+            .core_v1()
+            .read_namespaced_pod_log(
+                name=self.pod_name,
+                namespace=self.runner.namespace,
+                container='program',
+            )
+            .splitlines()
+        )
+
+    async def stream_logs(self, file=None) -> None:
+        """Stream logs until the terminal state is reached.
+
+        Args:
+            file:  a file-like object (stream); defaults to the current sys.stdout.
+        """
+        await self.wait(wait_for=ProgramState.RUNNING)
+        if not self.is_running():
+            return
+        file = file or sys.stdout
+        for line in watch.Watch().stream(
+            kubernetes.api().core_v1().read_namespaced_pod_log,
+            name=self.pod_name,
+            namespace=self.runner.namespace,
+            container='program',
+        ):
+            print(line, file=file)
+        await self.wait()
 
     def __repr__(self) -> str:
         """Returns a string representation.
 
         Note that JupyterLab uses __repr__ instead of __str__.
         """
-        status = 'Completed' if self.completed else 'Failed'
-        return f'{self.name} ({status})'
+        return f'{self.runner.name} ({self.runner.state.capitalize()})'
 
 
 def _get_secret(name: str, data: str) -> client.V1Secret:

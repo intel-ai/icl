@@ -27,11 +27,7 @@ dependencies = [
     "pydantic<2.0.0",
     "python-docker",
     "s3fs>=2023.9.2",
-    "prefect==2.13.6",
-    "kubernetes",
-    # FIXME: Temporary workaround for Prefect 2.13.0, see https://github.com/PrefectHQ/prefect/issues/10567
-    "anyio>=3.4.0,<4.0.0",
-    "asyncio",
+    "prefect==2.14.9",
 ]
 
 [project.urls]
@@ -44,6 +40,14 @@ infractl = "infractl.cli.main:main"
 [project.optional-dependencies]
 aws = [
     "boto3",
+]
+hub = [
+    "fastapi",
+]
+ssh = [
+    "paramiko",
+    "pypac",
+    "PySocks",
 ]
 build = [
     "build",
@@ -101,8 +105,9 @@ exclude_dirs = ["src/infractl/tests", "scripts/tests", "tests", "build"]
 skips = [
     "B404", # consider possible security implications associated with the subprocess module.
     "B603", # subprocess call - check for execution of untrusted input.
-    "B104", # possible binding to all interfaces
-    "B311", # standard pseudo-random generators are not suitable for security/cryptographic purposes
+    "B104", # possible binding to all interfaces.
+    "B311", # standard pseudo-random generators are not suitable for security/cryptographic purposes.
+    "B601", # possible shell injection via Paramiko call, check inputs are properly sanitized.
 ]
 
 [tool.pylint.main]

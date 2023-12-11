@@ -120,7 +120,7 @@ variable "docker_registry_storage_size" {
 
 variable "prefect_image_tag" {
   description = "Tag of the official Prefect Docker image"
-  default = "2.13.6-python3.9"
+  default = "2.14.3-python3.9"
   type = string
 }
 
@@ -205,14 +205,14 @@ variable "jupyterhub_singleuser_volume_size" {
 variable "jupyterhub_singleuser_default_image" {
   description = "Default Docker image for JupyterHub default profile"
   # original image: jupyterhub/k8s-singleuser-sample:2.0.1-0.dev.git.6035.h643c0f0c
-  default = "pbchekin/icl-jupyterhub:0.0.17"
+  default = "pbchekin/icl-jupyterhub:0.0.18"
   type = string
 }
 
 variable "jupyterhub_gpu_profile_image" {
   description = "Docker image for JupyterHub GPU profile"
   type = string
-  default = "pbchekin/icl-jupyterhub-gpu:0.0.17"
+  default = "pbchekin/icl-jupyterhub-gpu:0.0.18"
 }
 
 variable "jupyterhub_cluster_admin_enabled" {
