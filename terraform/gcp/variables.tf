@@ -34,7 +34,7 @@ variable "gpu_model" {
   default = "none"
 }
 
-variable "gpu_driver_version" {
+variable "gke_gpu_driver_version" {
   default = "DEFAULT"
   description = "the NVIDIA driver version to install"
 }

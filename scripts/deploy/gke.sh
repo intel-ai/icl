@@ -16,7 +16,7 @@ set -e
 : ${ICL_EXTERNALDNS_ENABLED:="false"}
 : ${CONTROL_NODE_IMAGE:="pbchekin/ccn-gcp:0.0.2"}
 : ${ICL_GCP_MACHINE_TYPE:="e2-standard-4"}
-: ${ICL_GCP_DRIVER_VERSION:="DEFAULT"}
+: ${GKE_GPU_DRIVER_VERSION:="DEFAULT"}
 
 # Declare global variables. This allows variables like $GPU_TYPE to be used inside x1_terraform_args()
 declare -g GPU_MODEL
@@ -106,6 +106,7 @@ function set_gpu_type() {
 function check_gpu_settings() {
     echo $GPU_MODEL
     echo $GPU_ENABLED
+    echo $GPU_MODEL
     echo $GPU_TYPE
     echo $EXTRA_RESOURCE_LIMITS
     if [[ "${GPU_ENABLED}" == "true" ]]; then
@@ -132,9 +133,8 @@ gcp_zone = "$ICL_GCP_ZONE"
 gcp_project = "$ICL_GCP_PROJECT_NAME"
 node_version = "$ICL_CLUSTER_VERSION"
 machine_type = "$ICL_GCP_MACHINE_TYPE"
-icl_gcp_driver_version = "$ICL_GCP_DRIVER_VERSION"
 gpu_model = "$GPU_MODEL"
-gpu_driver_version = "$ICL_GCP_DRIVER_VERSION"
+gke_gpu_driver_version = "$GKE_GPU_DRIVER_VERSION"
 EOF
 }
 
@@ -272,7 +272,6 @@ if [[ " $@ " =~ " --config " ]]; then
 fi
 
 if [[ " $@ " =~ " --deploy-x1 " ]]; then
-  set_gpu_type
   deploy_x1
   exit 0
 fi

@@ -19,6 +19,7 @@ module "icl-cluster" {
   cluster_name = var.cluster_name
   node_version = var.node_version
   machine_type = var.machine_type
+  gpu_model = var.gpu_model
 }
 
 module "firewall-rule-allow-tcp-8443" {

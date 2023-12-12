@@ -10,6 +10,13 @@ resource "google_container_node_pool" "gpu_pool" {
   cluster    = google_container_cluster.cluster.name
   node_count = 1
 
+}
+
+resource "google_container_node_pool" "gpu_pool" {
+  name       = "gpu-pool"
+  cluster    = google_container_cluster.cluster.name
+  node_count = 1
+
   node_config {
     image_type   = "cos_containerd"
     machine_type = var.machine_type
@@ -18,7 +25,7 @@ resource "google_container_node_pool" "gpu_pool" {
       type  = var.gpu_model
       count = 1
       gpu_driver_installation_config {
-        gpu_driver_version = var.gpu_driver_version
+        gpu_driver_version = var.gke_gpu_driver_version
       }
     }
 
