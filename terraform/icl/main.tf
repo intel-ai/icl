@@ -184,14 +184,16 @@ module "intel-gpu" {
   source = "../modules/intel-gpu"
 }
 
-module "nvidia-gpu" {
-  count = var.gpu_type == "nvidia" ? 1 : 0
-  source = "../modules/nvidia-gpu"
-  cloud_platform = var.cloud_platform
-}
+#module "nvidia-gpu" {
+#  count = var.gpu_type == "nvidia" ? 1 : 0
+#  source = "../modules/nvidia-gpu"
+#  cloud_platform = var.cloud_platform
+#}
 
 module "icl-hub" {
   source = "../modules/icl-hub"
   namespace_labels = var.namespace_labels
   ingress_domain = var.ingress_domain
+  use_node_ip_for_user_ports = var.use_node_ip_for_user_ports
+  use_external_node_ip_for_user_ports = var.use_external_node_ip_for_user_ports
 }

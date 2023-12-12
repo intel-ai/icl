@@ -299,8 +299,14 @@ variable "jupyterhub_gpu_profile_enabled" {
   default = false
 }
 
-variable "cloud_platform" {
-  description = "Which cloud platform is being used e.g. aws or gcp"
-  type = string
-  default = "none"
+variable "use_node_ip_for_user_ports" {
+  description = "Use k8s Node's InternalIP address when exposing user ports"
+  type = bool 
+  default = false
+}
+
+variable "use_external_node_ip_for_user_ports" {
+  description = "Use k8s Node's ExternalIP address when exposing user ports (use with use_node_ip_for_user_ports)"
+  type = bool
+  default = false
 }

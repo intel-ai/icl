@@ -19,13 +19,18 @@ module "icl-cluster" {
   cluster_name = var.cluster_name
   node_version = var.node_version
   machine_type = var.machine_type
-  gpu_model = var.gpu_model
-  gpu_driver_version = var.gpu_driver_version
 }
 
 module "firewall-rule-allow-tcp-8443" {
   depends_on = [ module.icl-cluster ]
   source = "./modules/firewall-rule-allow-tcp-8443"
+  cluster_name = var.cluster_name
+  network = module.icl-cluster.network
+}
+
+module "firewall-rule-allow-user-ports" {
+  depends_on = [ module.icl-cluster ]
+  source = "./modules/firewall-rule-allow-user-ports"
   cluster_name = var.cluster_name
   network = module.icl-cluster.network
 }

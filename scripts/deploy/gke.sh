@@ -142,11 +142,12 @@ function x1_terraform_args() {
     -var default_storage_class="standard-rwo"
     -var ray_load_balancer_enabled=false
     -var externaldns_enabled="${ICL_EXTERNALDNS_ENABLED}"
+    -var use_node_ip_for_user_ports=true
+    -var use_external_node_ip_for_user_ports=true
     -var jupyterhub_gpu_profile_enabled="${GPU_ENABLED}"
     -var gpu_enabled="${GPU_ENABLED}"
     -var gpu_type="${GPU_TYPE}"
     -var jupyterhub_extra_resource_limits="${EXTRA_RESOURCE_LIMITS}"
-    -var cloud_platform="gcp"
   )
   if [[ -v X1_TERRAFORM_DISABLE_LOCKING ]]; then
     terraform_extra_args+=( -lock=false )
