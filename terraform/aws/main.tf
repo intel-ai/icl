@@ -26,7 +26,7 @@ module "eks" {
       from_port = 32001
       to_port = 33999
       type = "ingress"
-      self = true
+      self = false
     }
   }
 
