@@ -37,7 +37,7 @@ def test_local_builder(tmp_path: pathlib.Path, address):
     image = builder.build(
         path=str(tmp_path),
         tag=tag,
-        buildargs ={
+        buildargs={
             'TEST_FILE': 'test_file',
         },
     )
