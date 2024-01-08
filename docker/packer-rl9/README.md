@@ -1,6 +1,6 @@
-# GitHub runner image for Rocky Linux image bundling
+# GitHub runner for Rocky Linux image bundling
 
-Get [gh-runner script](https://github.com/leshikus/gh-runner) and this repo. The script needs a context from `docker/packer-rl9/`.
+Get repos:
 
 ```
 git clone https://github.com/leshikus/gh-runner
@@ -10,7 +10,7 @@ git clone https://github.com/intel-ai/icl
 Set `TOKEN` from Github. Export `no_proxy`, `http_proxy`, `https_proxy` if needed. Run
 
 ```
-sh gh-runner/run.sh --device /dev/kvm --device /dev/fuse --token $TOKEN --labels packer intel-ai/icl/packer-1
+sh gh-runner/run.sh --context icl/docker/packer-rl9 --device /dev/kvm --device /dev/fuse --token $TOKEN --labels packer intel-ai/icl/packer-1
 ```
 
 Notes:
