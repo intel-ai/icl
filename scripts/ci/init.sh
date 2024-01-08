@@ -3,14 +3,13 @@
 set -e
 set -vx
 
-. scripts/ci/set-env.sh
+. scripts/ci/common.sh
 
 set_env() {
     export AGENT_ID
     export WORKSPACE_DIR
 
     export X1_PREFIX="$WORKFLOW_PREFIX"
-    export X1_VAGRANT_DIR="$WORKFLOW_DIR"
 
     export X1_LIBVIRT_DEFAULT_PREFIX="$WORKFLOW_PREFIX_ID"
     export VAGRANT_DEFAULT_PROVIDER=libvirt
@@ -20,19 +19,16 @@ set_env() {
     echo "X1_K8S_EXTRA_SETTINGS_FILE: $X1_K8S_EXTRA_SETTINGS_FILE"
 }
 
-start_vagrant() {
-}
-
-function cleanup {
-    cd "$X1_VAGRANT_DIR"
+function vm_cleanup {
+    cd "$WORKFLOW_DIR"
     echo "Copying logs ..."
     vagrant scp jumphost:x1/logs "$WORKSPACE_DIR" || true
     echo "Cleaning up Vagrant VMs ..."
     vagrant destroy -f || true
 }
 
-clean_all() {
-    cd "$X1_VAGRANT_DIR"
+vm_clean_before() {
+    cd "$WORKFLOW_DIR"
 
     ps -ef
     echo "Cleaning vagrant"
@@ -58,20 +54,7 @@ generate_key() {
     ln -snf ~/.ssh/id_rsa.pub generated/
 }
 
-ensure_vagrant_plugins() {
-    if ! vagrant plugin list | grep -q vagrant-proxyconf; then
-        vagrant plugin install vagrant-proxyconf
-    fi
-    if ! vagrant plugin list | grep -q vagrant-reload; then
-        vagrant plugin install vagrant-reload
-    fi
-    if ! vagrant plugin list | grep -q vagrant-scp; then
-        vagrant plugin install vagrant-scp
-    fi
-}
-
 set_env
-ensure_vagrant_plugins
-clean_all
+vm_clean_before
 generate_key
 
