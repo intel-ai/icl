@@ -3,44 +3,32 @@
 set -e
 set -vx
 
+. scripts/ci/common.sh
+
 set_env() {
-    AGENT_ID=$(hostname | sed -e 's/.*[^0-9]//')
-    export AGENT_ID=${AGENT_ID:-100}
+    export AGENT_ID
+    export WORKSPACE_DIR
 
-    WORKSPACE_DIR=$(dirname "$0")/../..
-    export WORKSPACE_DIR=$(cd "$WORKSPACE_DIR" && pwd -P)
+    export X1_PREFIX="$WORKFLOW_PREFIX"
 
-    export X1_PREFIX=$(basename "$0" .sh)
-    export X1_VAGRANT_DIR="$WORKSPACE_DIR/$X1_PREFIX"
-
-    export X1_LIBVIRT_DEFAULT_PREFIX="$X1_PREFIX-$AGENT_ID"
+    export X1_LIBVIRT_DEFAULT_PREFIX="$WORKFLOW_PREFIX_ID"
     export VAGRANT_DEFAULT_PROVIDER=libvirt
-    export X1_K8S_EXTRA_SETTINGS_FILE="$WORKSPACE_DIR/x1-cluster-profiles/profiles/ci.yaml"
     export no_proxy=localtest.me,.localtest.me,$no_proxy
 
-    echo "PWD: $PWD"
-    echo "WORKSPACE_DIR: $WORKSPACE_DIR"
     echo "X1_LIBVIRT_DEFAULT_PREFIX: $X1_LIBVIRT_DEFAULT_PREFIX"
     echo "X1_K8S_EXTRA_SETTINGS_FILE: $X1_K8S_EXTRA_SETTINGS_FILE"
 }
 
-start_vagrant() {
-    echo "Starting up Vagrant VMs ..."
-
-    cd "$X1_VAGRANT_DIR"
-    vagrant up
-}
-
-function cleanup {
-    cd "$X1_VAGRANT_DIR"
+function vm_cleanup {
+    cd "$WORKFLOW_DIR"
     echo "Copying logs ..."
     vagrant scp jumphost:x1/logs "$WORKSPACE_DIR" || true
     echo "Cleaning up Vagrant VMs ..."
     vagrant destroy -f || true
 }
 
-clean_all() {
-    cd "$X1_VAGRANT_DIR"
+vm_clean_before() {
+    cd "$WORKFLOW_DIR"
 
     ps -ef
     echo "Cleaning vagrant"
@@ -66,22 +54,9 @@ generate_key() {
     ln -snf ~/.ssh/id_rsa.pub generated/
 }
 
-ensure_vagrant_plugins() {
-    if ! vagrant plugin list | grep -q vagrant-proxyconf; then
-        vagrant plugin install vagrant-proxyconf
-    fi
-    if ! vagrant plugin list | grep -q vagrant-reload; then
-        vagrant plugin install vagrant-reload
-    fi
-    if ! vagrant plugin list | grep -q vagrant-scp; then
-        vagrant plugin install vagrant-scp
-    fi
-}
-
 set_env
-ensure_vagrant_plugins
-clean_all
-generate_key
+. "$WORKFLOW_DIR"/init.sh
 
-trap cleanup EXIT
+vm_clean_before
+generate_key
 
