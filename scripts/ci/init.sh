@@ -54,6 +54,8 @@ generate_key() {
     ln -snf ~/.ssh/id_rsa.pub generated/
 }
 
+. "$WORKFLOW_DIR"/init.sh
+
 set_env
 vm_clean_before
 generate_key
