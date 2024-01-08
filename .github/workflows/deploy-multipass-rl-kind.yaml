@@ -1,4 +1,4 @@
-name: Single node cluster with Vagrant, Rocky Linux, Kind
+name: Single node cluster with Multipass, Rocky Linux, Kind
 
 # Controls when the workflow will run
 on:
