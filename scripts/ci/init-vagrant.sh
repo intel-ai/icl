@@ -50,7 +50,7 @@ vm_clean_before() {
     echo "Cleaning domains"
     virsh list --all
     virsh list --all --name | grep -E "^${X1_LIBVIRT_DEFAULT_PREFIX}-" | xargs --no-run-if-empty -n 1 virsh destroy || true
-    virsh list --all --name | grep -E "^${X1_LIBVIRT_DEFAULT_PREFIX}-" | xargs --no-run-if-empty -n 1 virsh undefine || true
+    virsh list --all --name | grep -E "^${X1_LIBVIRT_DEFAULT_PREFIX}-" | xargs --no-run-if-empty -n 1 virsh undefine --remove-all-storage || true
 
     echo "Cleaning nets"
     virsh net-list --all
