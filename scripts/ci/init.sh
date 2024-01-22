@@ -34,6 +34,7 @@ set_env() {
 
 run_kind() {
     vm_start
+    exit 1
     vm_exec ./x1/scripts/deploy/kind.sh
     vm_exec ./x1/scripts/deploy/kind.sh --console ./scripts/ccn/test.sh
     vm_cleanup
