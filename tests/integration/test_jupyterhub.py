@@ -122,4 +122,5 @@ def test_jupyterhub_enable_ssh(jupyterhub_namespace, jupyterhub_session_pod_name
         ],
     )
 
+    print(f"{output=}")
     assert 'log in to your session' in output
