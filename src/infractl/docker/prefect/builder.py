@@ -86,8 +86,8 @@ def kill_docker(timeout=30):
             try:
                 process_name = process.name()
             except psutil.NoSuchProcess:
-                # process.name() raises NoSuchProcess exception if the process dies between getting its
-                # pid and name. We can ignore such case and continue.
+                # process.name() raises NoSuchProcess exception if the process dies between getting
+                # its pid and name. We can ignore such case and continue.
                 continue
             if process_name in ('docker-init', 'dockerd', 'containerd'):
                 docker_processes.append(process_name)
