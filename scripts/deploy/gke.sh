@@ -104,15 +104,10 @@ function set_gpu_type() {
 }
 
 function check_gpu_settings() {
-    echo $GPU_MODEL
-    echo $GPU_ENABLED
-    echo $GPU_MODEL
-    echo $GPU_TYPE
-    echo $EXTRA_RESOURCE_LIMITS
-    if [[ "${GPU_ENABLED}" == "true" ]]; then
-        if [[ -z "${GPU_TYPE}" || -z "${EXTRA_RESOURCE_LIMITS}" ]]; then
-            echo "Warning: GPU is enabled but GPU_TYPE or EXTRA_RESOURCE_LIMITS are not set."
-            exit 800
+    if [[ "${JUPYTERHUB_GPU_PROFILE_ENABLED}" == "true" ]]; then
+        if [[ -z "${GPU_TYPE}" || -z "${JUPYTERHUB_EXTRA_RESOURCE_LIMITS}" ]]; then
+            echo "Warning: JupyterHub GPU profile is enabled, but GPU_TYPE or JUPYTERHUB_EXTRA_RESOURCE_LIMITS are not set."
+            exit 2
         fi
     fi
 }
@@ -133,8 +128,12 @@ gcp_zone = "$ICL_GCP_ZONE"
 gcp_project = "$ICL_GCP_PROJECT_NAME"
 node_version = "$ICL_CLUSTER_VERSION"
 machine_type = "$ICL_GCP_MACHINE_TYPE"
+gpu_driver_version = "$GKE_GPU_DRIVER_VERSION"
+jupyterhub_gpu_profile_enabled="$JUPYTERHUB_GPU_PROFILE_ENABLED"
+gpu_type="$GPU_TYPE"
 gpu_model = "$GPU_MODEL"
-gke_gpu_driver_version = "$GKE_GPU_DRIVER_VERSION"
+jupyterhub_extra_resource_limits="$JUPYTERHUB_EXTRA_RESOURCE_LIMITS"
+jupyterhub_gpu_profile_image="$JUPYTER_GPU_PROFILE_IMAGE"
 EOF
 }
 
@@ -147,10 +146,11 @@ function x1_terraform_args() {
     -var default_storage_class="standard-rwo"
     -var ray_load_balancer_enabled=false
     -var externaldns_enabled="${ICL_EXTERNALDNS_ENABLED}"
-    -var jupyterhub_gpu_profile_enabled="${JUPYTERHUB_GPU_PROFILE_ENABLED}"
+    -var jupyterhub_gpu_profile_enabled="${JUPYTERHUB_GPU_PROFILE_PROFILE_ENABLED}"
     -var gpu_enabled="${GPU_ENABLED}"
     -var gpu_type="${GPU_TYPE}"
-    -var jupyterhub_extra_resource_limits="${JUPYTERHUB_EXTRA_RESOURCE_LIMITS}"
+    -var jupyterhub_extra_resource_limits="${JUPYTERHUB_JUPYTERHUB_EXTRA_RESOURCE_LIMITS}"
+    -var jupyterhub_gpu_profile_image="${JUPYTER_GPU_PROFILE_IMAGE}"
     -var jupyterhub_gpu_profile_image="${JUPYTER_GPU_PROFILE_IMAGE}"
     -var use_node_ip_for_user_ports=true
     -var use_external_node_ip_for_user_ports=true
@@ -272,6 +272,7 @@ if [[ " $@ " =~ " --config " ]]; then
 fi
 
 if [[ " $@ " =~ " --deploy-x1 " ]]; then
+  set_gpu_type
   deploy_x1
   exit 0
 fi
@@ -282,6 +283,7 @@ if [[ " $@ " =~ " --delete " ]]; then
 fi
 
 if [[ " $@ " =~ " --delete-x1 " ]]; then
+  set_gpu_type
   delete_x1
   exit 0
 fi

@@ -1,8 +1,9 @@
 resource "google_container_cluster" "cluster" {
   name     = var.cluster_name
   min_master_version = var.node_version
-  remove_default_node_pool = true
   initial_node_count = 1
+  remove_default_node_pool = true
+  deletion_protection = false
 }
 
 resource "google_container_node_pool" "gpu_pool" {
