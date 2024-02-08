@@ -18,6 +18,7 @@ jobs:
           sh -vx
 
           gid=$(getent group kvm | awk -F : '{ print $3 }')
+          docker rm --force packer-rl9 || true
 
           docker build docker/packer-rl9 \
             --build-arg http_proxy \
