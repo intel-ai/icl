@@ -5,6 +5,14 @@
   debug:
     msg: "{{ ansible_os_family }}"
 
+- name: Setup for Debian family
+  include_tasks: debian.yaml
+  when: ansible_os_family == "Debian"
+
+- name: Setup for RedHat family
+  include_tasks: redhat.yaml
+  when: ansible_os_family == "RedHat"
+
 - name: Copy required files to jumphost
   copy:
     # Source path should point to root location of repo relative to
@@ -36,14 +44,6 @@
 - name: Extract git archive
   command: tar zxf /tmp/icl.tgz
   when: use_git_archive
-
-- name: Setup for Debian family
-  include_tasks: debian.yaml
-  when: ansible_os_family == "Debian"
-
-- name: Setup for RedHat family
-  include_tasks: redhat.yaml
-  when: ansible_os_family == "RedHat"
 
 - name: Generate /etc/docker/daemon.json
   become: true
