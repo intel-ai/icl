@@ -24,7 +24,7 @@ host_key_checking = False
 EOF
 
     # Fix ERROR: Ansible could not initialize the preferred locale: unsupported locale setting
-    export LANG="en_US.UTF-8"
+    export LC_ALL="C.UTF-8"
     locale
 
     multipass launch --name "vm-$WORKFLOW_PREFIX_ID" -m "$VM_MEMORY"M -c "$VM_CPU" -d "$VM_DISK"G --cloud-init=./cloud-init.yaml rocky
