@@ -6,10 +6,9 @@ vm_start() {
 
     cd "$WORKFLOW_DIR"
     rsa_key=$(cat ~/.ssh/id_rsa.pub)
+
     cat <<EOF >cloud-init.yaml
 #cloud-config
-locale: en_US.UTF-8
-
 ssh_authorized_keys:
   - $rsa_key
 
@@ -18,10 +17,15 @@ fqdn: jumphost
 runcmd:
   - apt update && apt upgrade -y
 EOF
+
     cat <<EOF >ansible.cfg
 [defaults]
 host_key_checking = False
 EOF
+
+    # Fix ERROR: Ansible could not initialize the preferred locale: unsupported locale setting
+    export LANG="en_US.UTF-8"
+    locale
 
     multipass launch --name "vm-$WORKFLOW_PREFIX_ID" -m "$VM_MEMORY"M -c "$VM_CPU" -d "$VM_DISK"G --cloud-init=./cloud-init.yaml rocky
 
