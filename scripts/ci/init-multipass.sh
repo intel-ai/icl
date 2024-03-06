@@ -8,6 +8,8 @@ vm_start() {
     rsa_key=$(cat ~/.ssh/id_rsa.pub)
     cat <<EOF >cloud-init.yaml
 #cloud-config
+locale: en_US.UTF-8
+
 ssh_authorized_keys:
   - $rsa_key
 
