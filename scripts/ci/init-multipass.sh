@@ -48,7 +48,7 @@ vm_clean_before() {
 }
 
 vm_cleanup() {
-    multipass delete -p "vm-$WORKFLOW_PREFIX_ID"
+    vm_clean_before
 }
 
 
