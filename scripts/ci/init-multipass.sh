@@ -40,7 +40,7 @@ vm_exec() {
 vm_copy_logs() {
     echo "Copying logs ..."
     cd "$WORKFLOW_DIR"
-    multipass transfer "vm-$WORKFLOW_PREFIX_ID":x1/logs "$WORKSPACE_DIR" || true
+    multipass transfer --recursive --parents "vm-$WORKFLOW_PREFIX_ID":x1/logs "$WORKSPACE_DIR" || true
 }
 
 vm_clean_before() {
