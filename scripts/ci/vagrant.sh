@@ -12,6 +12,13 @@ echo X1_NOMAAS_CLUSTER_SUBNET_PREFIX: $X1_NOMAAS_CLUSTER_SUBNET_PREFIX
 
 vm_start
 vm_exec ./everything.sh
-vm_exec ./test.sh
+
+RESULT=0
+if ! vm_exec ./test.sh; then
+  RESULT=1
+fi
+
+vm_copy_logs
 vm_cleanup
 
+exit $RESULT
