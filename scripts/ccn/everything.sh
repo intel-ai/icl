@@ -12,7 +12,7 @@ cd ~/kubespray
 ansible-playbook --inventory ~/generated/kubespray-inventory/inventory.yaml --become cluster.yml
 
 cd ~/x1
-ansible-playbook --inventory ~/generated/kubespray-inventory/inventory.yaml ansible/playbooks/fetch-kubeconfig.yaml
+ansible-playbook --inventory ~/generated/kubespray-inventory/inventory.yaml ansible/playbooks/fetch-kubeconfig.yaml || sleep 60m
 ansible-playbook --inventory ~/generated/kubespray-inventory/inventory.yaml ansible/playbooks/terraform_tfvars.yaml
 
 cd ~/x1/terraform/icl
