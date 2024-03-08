@@ -1,3 +1,4 @@
+import re
 import time
 
 import pytest
@@ -184,8 +185,10 @@ def jupyterhub_enable_ssh(jupyterhub_namespace, jupyterhub_session_pod_name):
     )
 
     # output is "Use the following command to log in to your session: ssh jovyan@localtest.me -p 32001"
-    assert 'log in to your session' in output
+    cs_match = re.match(r'.+: ssh jovyan@([^ ]+) -p (\d+)', output)
+    assert cs_match, 'output matches'
 
-    # TODO: parse it from `output`?
-    port = 32001
-    yield username, password, port
+    host = cs_match.group(1)
+    port = int(cs_match.group(2))
+
+    yield username, password, host, port
