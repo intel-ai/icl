@@ -16,7 +16,6 @@ vm_exec ./everything.sh
 RESULT=0
 if ! vm_exec ./test.sh; then
   RESULT=1
-  sleep 60m
 fi
 
 vm_copy_logs
