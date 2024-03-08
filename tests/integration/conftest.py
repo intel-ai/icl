@@ -184,12 +184,11 @@ def jupyterhub_enable_ssh(jupyterhub_namespace, jupyterhub_session_pod_name):
         ],
     )
 
-    print(f'output: "{output}"')
     # output is "Use the following command to log in to your session: ssh jovyan@localtest.me -p 32001"
-    cs_match = re.match(r'.+: ssh jovyan@([^ ]+) -p (\d+)', output)
-    assert cs_match, 'output matches'
+    matcher = re.search(r'.+: ssh jovyan@([^ ]+) -p (\d+)', output)
+    assert matcher, f'output "{output}" matches regex'
 
-    host = cs_match.group(1)
-    port = int(cs_match.group(2))
+    host = matcher.group(1)
+    port = int(matcher.group(2))
 
     yield username, password, host, port
