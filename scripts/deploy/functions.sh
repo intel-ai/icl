@@ -206,7 +206,7 @@ function check_args() {
   invalid_arg=false
 
   for arg in "$@"; do
-      if [ $arg = "--console" ]; then
+      if [[ $arg == "--console" ]]; then
         break  
       fi
       # Check if the argument is not in the allowed list
