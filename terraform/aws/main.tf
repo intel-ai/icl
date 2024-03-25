@@ -57,23 +57,18 @@ module "eks" {
     }
   }
 
-  #eks_managed_node_group_defaults = {
-  #  disk_size = 50
-  #}
-
   eks_managed_node_groups = {
     main = {
       min_size = 3
       max_size = 3
       desired_size = 3
-      disk_size = 50
       instance_types = ["t3.xlarge"]
       capacity_type  = "ON_DEMAND"
       block_device_mappings = {
         xvda = {
           device_name = "/dev/xvda"
           ebs         = {
-            volume_size           = 50
+            volume_size           = 250
             volume_type           = "gp3"
             iops                  = 3000
             throughput            = 150
