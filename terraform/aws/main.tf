@@ -15,16 +15,16 @@ module "eks" {
     ingress_self_all = {
       description = "Node to node all ports/protocols"
       protocol = "-1"
-      from_port = 0
-      to_port = 0
+      from_port = 1
+      to_port = 65535
       type = "ingress"
       self = true
     }
     user_ports_incoming_node = {
       description = "Incoming TCP to user ports"
       protocol = "tcp"
-      from_port = 32001
-      to_port = 33999
+      from_port = 1
+      to_port = 65535
       type = "ingress"
       cidr_blocks = ["0.0.0.0/0"]
     }
@@ -57,17 +57,31 @@ module "eks" {
     }
   }
 
-  eks_managed_node_group_defaults = {
-    disk_size = 250
-  }
+  #eks_managed_node_group_defaults = {
+  #  disk_size = 50
+  #}
 
   eks_managed_node_groups = {
     main = {
       min_size = 3
       max_size = 3
       desired_size = 3
+      disk_size = 50
       instance_types = ["t3.xlarge"]
       capacity_type  = "ON_DEMAND"
+      block_device_mappings = {
+        xvda = {
+          device_name = "/dev/xvda"
+          ebs         = {
+            volume_size           = 50
+            volume_type           = "gp3"
+            iops                  = 3000
+            throughput            = 150
+            encrypted             = false
+            delete_on_termination = false
+          }
+        }
+      }
     }
   }
 
