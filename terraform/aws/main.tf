@@ -24,7 +24,7 @@ module "eks" {
       description = "Incoming TCP to user ports"
       protocol = "tcp"
       from_port = 32001
-      to_port = 65535
+      to_port = 33999
       type = "ingress"
       cidr_blocks = ["0.0.0.0/0"]
     }
