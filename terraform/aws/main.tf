@@ -71,7 +71,7 @@ module "eks" {
             volume_size           = 250
             volume_type           = "gp3"
             encrypted             = false
-            delete_on_termination = false
+            delete_on_termination = true
           }
         }
       }
